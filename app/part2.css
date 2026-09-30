@@ -1,0 +1,741 @@
+/* ============================================================
+   지오엑스-세계의 기후 — part2.css
+   PART 2 전용 스타일: 노드형 블록(ui/nodes.js) + 시각 자료(chapters/part2-figs.js)
+   - style.css의 토큰(--fs-body, --accent, --line …)을 그대로 사용
+   - 노드 색은 --nc (노드마다 다름)
+   ============================================================ */
+
+/* ---------- 노드형 블록: 공통 틀 ---------- */
+.nd { flex: 1; min-height: 0; display: flex; flex-direction: column; --nc: var(--accent); }
+.nd-hub { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: clamp(14px, 1.5vw, 26px); }
+.nd-intro { flex: none; display: flex; flex-direction: column; gap: .6em; font-size: 1.08em; }
+.nd-def {
+  align-self: flex-start; padding: .55em 1.1em; border-radius: 14px; font-size: 1.25em; font-weight: 800; line-height: 1.4;
+  color: var(--ink); background: var(--accent-soft); border-left: 6px solid var(--accent);
+}
+.nd-def b { color: var(--accent-ink); font-weight: 900; }
+.nd-hint { font-size: .8em; font-weight: 700; color: var(--faint); }
+
+.nd-groups { flex: 1; min-height: 0; display: grid; gap: clamp(12px, 1.2vw, 22px); }
+.nd-groups.g2 { grid-template-columns: minmax(0, 4fr) minmax(0, 3fr); }
+.nd-group { min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.nd-glabel { flex: none; font-size: .8em; font-weight: 900; color: var(--muted); letter-spacing: -.01em; }
+.nd-cards { flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: clamp(10px, 1vw, 18px); }
+
+.nd-card {
+  position: relative; min-height: 0; display: flex; flex-direction: column; align-items: flex-start; gap: .4em;
+  padding: clamp(14px, 1.4vw, 26px); border-radius: 18px; cursor: pointer; text-align: left; font-size: 1em;
+  background: var(--panel); border: 1px solid var(--line); border-top: 7px solid var(--nc); box-shadow: var(--shadow-soft);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.nd-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--nc); }
+.nd-card:focus-visible { outline: 3px solid var(--nc); outline-offset: 2px; }
+.nd-card-emo { font-family: var(--emoji); font-size: 2.4em; line-height: 1; }
+.nd-card-name { font-size: 1.55em; font-weight: 900; letter-spacing: -.02em; color: var(--nc); }
+.nd-card-desc { font-size: 1em; font-weight: 700; line-height: 1.45; color: var(--ink-2); }
+.nd-card-go { margin-top: auto; padding-top: .6em; display: flex; flex-wrap: wrap; gap: 5px; font-size: .76em; font-weight: 800; line-height: 1.35; color: var(--ink-2); }
+.nd-card-go i { font-style: normal; padding: 3px 9px; border-radius: 8px; background: color-mix(in srgb, var(--nc) 10%, #fff); }
+.nd-card--link .nd-card-go { color: var(--nc); }
+.nd-card::after {
+  content: "→"; position: absolute; right: 18px; top: 14px; font-size: 1.2em; font-weight: 900; color: var(--nc); opacity: .55;
+}
+.nd-card--link { border-style: dashed; border-top-style: solid; background: var(--panel-2); box-shadow: none; }
+/* 노드 3개(2-1): 큰 카드 — 가운데 정렬, 소주제는 세로 목록 */
+.g1 .nd-card { align-items: center; justify-content: center; gap: .6em; text-align: center; }
+.g1 .nd-card-emo { font-size: 5em; }
+.g1 .nd-card-name { font-size: 2.5em; }
+.g1 .nd-card-desc { font-size: 1.25em; }
+.g1 .nd-card-go { margin-top: .8em; flex-direction: column; align-items: stretch; gap: 7px; width: min(100%, 320px); font-size: .95em; }
+.g1 .nd-card-go i { padding: 8px 14px; border-radius: 10px; }
+.g2 .nd-card-name { font-size: 1.3em; }
+.g2 .nd-card-emo { font-size: 2em; }
+
+/* ---------- 노드 화면 ---------- */
+.nd-view { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: clamp(8px, .8vw, 14px); }
+.nd-bar { flex: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.nd-tab {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+  font-size: .86em; font-weight: 800; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line);
+}
+.nd-tab:hover { border-color: var(--nc, var(--accent)); }
+.nd-tab-emo { font-family: var(--emoji); }
+.nd-tab.on { color: #fff; background: var(--nc); border-color: var(--nc); }
+.nd-home { color: var(--muted); background: var(--panel-2); }
+.nd-home:hover { border-color: var(--ink-2); color: var(--ink); }
+
+.nd-topics { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.nd-topic {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 12px; cursor: pointer;
+  font-size: .95em; font-weight: 800; color: var(--nc); background: var(--panel); border: 2px solid var(--nc);
+}
+.nd-topic .nd-t-no { font-weight: 900; }
+.nd-topic:hover { background: color-mix(in srgb, var(--nc) 8%, #fff); }
+.nd-topic.on { color: #fff; background: var(--nc); }
+
+.nd-stage { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.4fr); gap: clamp(14px, 1.6vw, 30px); }
+.nd-text {
+  min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: .9em;
+  padding: clamp(16px, 1.6vw, 28px); border-radius: 18px; background: var(--panel); border: 1px solid var(--line); border-left: 7px solid var(--nc);
+}
+.nd-t-title { display: flex; align-items: baseline; gap: .4em; font-size: 1.4em; font-weight: 900; letter-spacing: -.02em; line-height: 1.3; }
+.nd-t-title .nd-t-no { color: var(--nc); }
+.nd-pts { display: grid; gap: .7em; }
+.nd-pts li { position: relative; padding-left: 1.1em; font-size: 1.08em; line-height: 1.55; color: var(--ink-2); }
+.nd-pts li::before { content: ""; position: absolute; left: .1em; top: .64em; width: .42em; height: .42em; border-radius: 50%; background: var(--nc); }
+.nd-pts b { color: var(--ink); font-weight: 900; }
+.nd-terms { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto; padding-top: .4em; border-top: 1px dashed var(--line-2); }
+.nd-terms-l { margin-right: 4px; font-size: .74em; font-weight: 900; color: var(--muted); }
+.nd-term { padding: 3px 10px; border-radius: 8px; font-size: .8em; font-weight: 800; color: var(--nc); background: color-mix(in srgb, var(--nc) 10%, #fff); }
+.nd-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.nd-fig { min-height: 0; display: flex; flex-direction: column; gap: clamp(8px, .8vw, 12px); }
+
+/* ---------- 시각 자료 공통 ---------- */
+.p2-figwrap {
+  position: relative; flex: 1; min-height: 170px;
+  border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+}
+.p2-figwrap > .p2-svg { position: absolute; inset: 8px; width: calc(100% - 16px); height: calc(100% - 16px); }
+.p2-figwrap.sch { flex: 0 0 auto; height: clamp(110px, 20vh, 190px); min-height: 0; }
+.p2-sch .p2-lbl.sm { font-size: 21px; }
+.p2-svg { display: block; font-family: var(--font); overflow: hidden; }
+.p2-body, .p2-stack { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: clamp(8px, .8vw, 12px); }
+.p2-cap { flex: none; font-size: .82em; line-height: 1.5; color: var(--muted); }
+.p2-row { flex: none; display: flex; gap: 10px; }
+.p2-row > .p2-big { flex: 1; }
+.p2-row.sm .p2-big-v { font-size: 1.15em; }
+.p2-duo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+.p2-duo.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.p2-duo.rows { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.45fr) minmax(0, 1fr); }
+.p2-duo.rows > .p2-figwrap { min-height: 0; }
+
+.p2-seg { flex: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.p2-sb {
+  padding: 8px 16px; border-radius: 10px; cursor: pointer; font-size: .9em; font-weight: 800;
+  color: var(--ink-2); background: var(--panel); border: 2px solid var(--line);
+}
+.p2-sb small { font-size: .78em; font-weight: 700; color: var(--muted); }
+.p2-sb:hover { border-color: var(--nc); }
+.p2-sb.on { color: #fff; background: var(--nc); border-color: var(--nc); }
+.p2-sb.on small { color: rgba(255, 255, 255, .85); }
+
+.p2-big {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--line-2);
+}
+.p2-big-l { font-size: .78em; font-weight: 800; color: var(--muted); }
+.p2-big-l small { font-weight: 700; color: var(--faint); }
+.p2-big-v { font-size: 1.55em; font-weight: 900; letter-spacing: -.02em; line-height: 1.15; color: var(--ink); font-variant-numeric: tabular-nums; }
+.p2-big-s { font-size: .74em; color: var(--muted); }
+.p2-big.warm { border-left-color: #e2632b; } .p2-big.warm .p2-big-v { color: #d4561f; }
+.p2-big.cold { border-left-color: #2878d8; } .p2-big.cold .p2-big-v { color: #1f68c4; }
+.p2-big.rain { border-left-color: #2b6fe3; } .p2-big.rain .p2-big-v { color: #1d4fb0; }
+.p2-big.key { border-left-color: var(--nc); background: color-mix(in srgb, var(--nc) 7%, #fff); } .p2-big.key .p2-big-v { color: var(--nc); }
+.p2-big.c1 { border-left-color: #e0483a; } .p2-big.c1 .p2-big-v { color: #e0483a; }
+.p2-big.c2 { border-left-color: #7a5cc8; } .p2-big.c2 .p2-big-v { color: #7a5cc8; }
+
+.p2-flow { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .9em; font-weight: 800; }
+.p2-flow span { padding: 5px 12px; border-radius: 10px; color: var(--ink); background: color-mix(in srgb, var(--nc) 10%, #fff); }
+.p2-flow i { font-style: normal; font-weight: 900; color: var(--nc); }
+.p2-flow.sm { font-size: .8em; }
+.p2-readout { flex: none; padding: 8px 14px; border-radius: 12px; font-size: .92em; line-height: 1.5; color: var(--ink-2); background: var(--panel-2); }
+.p2-readout b { color: var(--nc); font-weight: 900; }
+.p2-dirname { font-size: 1.2em; }
+
+.p2-slider { flex: none; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: .92em; font-weight: 800; }
+.p2-slider input { flex: 1; min-width: 160px; accent-color: var(--nc); height: 26px; cursor: pointer; }
+.p2-sl-v { min-width: 5em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.p2-sl-v b { color: var(--nc); }
+.p2-presets { flex: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.p2-pre { padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: .8em; font-weight: 800; color: var(--ink-2); background: var(--panel-2); border: 1.5px solid var(--line); }
+.p2-pre:hover { border-color: var(--nc); color: var(--nc); }
+
+.p2-scales { flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.p2-sc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: .86em; }
+.p2-sc b { font-weight: 900; color: var(--ink); }
+.p2-sc span { color: var(--ink-2); line-height: 1.4; }
+.p2-sc em { font-style: normal; font-size: .9em; font-weight: 800; color: var(--nc); }
+.p2-sc.on { border-color: var(--nc); background: color-mix(in srgb, var(--nc) 7%, #fff); }
+.p2-sc .go-chip { font-size: .86em; padding: 4px 10px; }
+
+.p2-mapbox { flex: 1; min-height: 200px; display: flex; }
+.p2-mapbox .wm { gap: 4px; }
+.p2-mapbox .wm-src { font-size: 10px; }
+.p2-mapbox.muted .wm-img { opacity: .32; }
+.p2-mapbox.tall { flex: 1.5; }
+.p2-mapbox .wm-svg { cursor: default; }
+
+.p2-pair { display: flex; flex-direction: column; gap: 6px; }
+.p2-pair-t { font-size: .74em; font-weight: 900; color: var(--muted); }
+.p2-pair .p2-big-v { font-size: 1.3em; }
+.p2-pair { display: grid; grid-template-columns: 1fr 1fr; }
+.p2-pair-t { grid-column: 1 / -1; }
+
+.p2-amwrap { flex: none; }
+.p2-amtab { display: grid; grid-template-columns: auto 1fr 1fr; gap: 5px; font-size: .86em; }
+.p2-amtab span { display: flex; align-items: center; justify-content: center; padding: 8px 6px; border-radius: 9px; text-align: center; }
+.p2-amtab .h { font-weight: 900; color: var(--muted); background: var(--panel-2); }
+.p2-amtab .cell { font-weight: 800; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line); }
+.p2-amtab .cell.on { color: #fff; background: var(--nc); border-color: var(--nc); }
+
+/* ---------- 그래프 ---------- */
+.p2-chart .p2-grid { stroke: #e8ecf2; stroke-width: 1; }
+.p2-grid.zero { stroke: #b9c2d0; }
+.p2-base { stroke: #9aa3b2; stroke-width: 1.4; }
+.p2-ax { font-size: 14px; fill: #7a8394; font-variant-numeric: tabular-nums; }
+.p2-unit { font-size: 13px; font-weight: 800; fill: #7a8394; }
+.p2-mon { font-size: 15px; font-weight: 700; fill: #6b7385; }
+.p2-mon.u { font-size: 12px; }
+.p2-line { fill: none; stroke-width: 3.2; stroke-linejoin: round; }
+.p2-dot { stroke: #fff; stroke-width: 2; }
+.p2-dot.key { stroke-width: 3; }
+.p2-dot.sel { r: 9px; stroke: var(--ink); stroke-width: 3; }
+.p2-hit { fill: transparent; cursor: pointer; }
+.p2-mean { stroke-width: 2; stroke-dasharray: 7 5; opacity: .75; }
+.p2-mean-t { font-size: 15px; font-weight: 900; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.p2-key-t { font-size: 15px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.p2-bracket line { stroke-width: 3; }
+.p2-legend line { stroke-width: 4; }
+.p2-legend text { font-size: 15px; font-weight: 800; fill: var(--ink-2); }
+.p2-bar { fill: #9cc0f3; }
+.p2-bar.on { fill: #2b6fe3; }
+.p2-bar-t { font-size: 13px; font-weight: 700; fill: #6b7385; }
+.p2-bar-t.on { font-size: 15px; font-weight: 900; fill: #1d4fb0; }
+.p2-hb-n { font-size: 21px; font-weight: 900; fill: var(--ink); }
+.p2-hb-s { font-size: 15px; font-weight: 700; fill: var(--muted); }
+.p2-hb { fill: #9aa3b2; }
+.p2-hb.warm { fill: #e2632b; }
+.p2-hb.cold { fill: #2878d8; }
+.p2-hb.rain { fill: #7fb2e8; }
+.p2-hb-v { font-size: 21px; font-weight: 900; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.p2-hb-v.warm { fill: #d4561f; }
+.p2-hb-v.cold { fill: #1f68c4; }
+
+/* ---------- 모식도 공통 요소 ---------- */
+.p2-lbl { font-size: 18px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: rgba(255, 255, 255, .9); stroke-width: 4px; stroke-linejoin: round; }
+.p2-lbl.sm { font-size: 15px; font-weight: 800; }
+.p2-lbl.muted { fill: var(--muted); }
+.p2-lbl.warm-t { fill: #d4561f; }
+.p2-lbl.cold-t { fill: #1f68c4; }
+.p2-num { font-size: 26px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.p2-emo { font-family: var(--emoji); font-size: 30px; text-anchor: middle; }
+.p2-sky { fill: #eef5fc; }
+.p2-sky.night { fill: #26324f; }
+.p2-grass { fill: #9ccc7a; }
+.p2-ground { fill: #cdb993; }
+.p2-ground.hot { fill: #e8a765; }
+.p2-mtn { fill: #b8a488; stroke: #8f7b5f; stroke-width: 2; stroke-linejoin: round; }
+.p2-sun circle { fill: #ffd84a; stroke: #f2b705; stroke-width: 2; }
+.p2-sun line { stroke: #f2b705; stroke-width: 3; stroke-linecap: round; }
+.p2-sun.weak { fill: #ffe9a3; }
+.p2-moon { fill: #f4efd2; }
+.p2-cloud ellipse, .p2-cloud circle { fill: #fff; stroke: #c9d2de; stroke-width: 1.5; }
+.p2-cloud.dark ellipse, .p2-cloud.dark circle { fill: #b9c3d1; stroke: #97a3b5; }
+.p2-rain line { stroke: #2b6fe3; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 14 18; animation: p2-fall .9s linear infinite; }
+@keyframes p2-fall { to { stroke-dashoffset: -32; } }
+.p2-cond { stroke: #7a8394; stroke-width: 1.6; stroke-dasharray: 8 6; }
+.p2-heat path { fill: none; stroke: #e2632b; stroke-width: 2.5; stroke-linecap: round; opacity: .8; }
+.p2-cold { fill: rgba(40, 120, 216, .22); stroke: #2878d8; stroke-width: 1.5; }
+.p2-warm { fill: rgba(226, 99, 43, .18); stroke: #e2632b; stroke-width: 1.5; }
+.p2-frontl { stroke: #1b2233; stroke-width: 3; stroke-dasharray: 10 6; }
+.p2-hl { font-size: 40px; font-weight: 900; fill: var(--ink); }
+.p2-hl.h { fill: #d64545; }
+.p2-hl.l { fill: #2b6fe3; }
+.p2-lead { stroke: var(--faint); stroke-width: 1.5; stroke-dasharray: 4 4; }
+
+.p2-arrow { color: #394155; }
+.p2-arrow line { stroke: currentColor; stroke-linecap: round; }
+.p2-arrow polygon { fill: currentColor; }
+.p2-arrow.warm { color: #e2632b; }
+.p2-arrow.up { color: #2b6fe3; }
+.p2-arrow.warm.up { color: #e2632b; }
+.p2-arrow.faint { color: #9aa3b2; }
+.p2-arrow.wind { color: #2f9e8f; }
+.p2-arrow.wind line { stroke-dasharray: 16 10; animation: p2-dash var(--sp, 1.2s) linear infinite; }
+.p2-arrow.dir { color: var(--nc); }
+.p2-arrow.dir line { animation-duration: 1s; }
+@keyframes p2-dash { to { stroke-dashoffset: -26; } }
+.p2-arrow.up line { stroke-dasharray: 16 10; animation: p2-dash 1.1s linear infinite; }
+
+/* 기온 측정 */
+.p2-shelter line { stroke: #8a8f99; stroke-width: 5; }
+.p2-shelter rect, .p2-shelter .roof { fill: #fff; stroke: #8a8f99; stroke-width: 2.5; }
+.p2-shelter .louver { stroke: #c3c8d0; stroke-width: 2; }
+.p2-thermo rect { fill: #fff; stroke: #6b7385; stroke-width: 2; }
+.p2-thermo circle { fill: #e0483a; stroke: #6b7385; stroke-width: 2; }
+.p2-thermo .lv { fill: #e0483a; stroke: none; }
+.p2-thermo.big.cold circle, .p2-thermo.big.cold .lv { fill: #2878d8; }
+.p2-dim line { stroke: var(--nc); stroke-width: 2.5; }
+.p2-dim text { font-size: 20px; font-weight: 900; fill: var(--nc); }
+.p2-aws line { stroke: #6b7385; stroke-width: 4; }
+.p2-aws circle { fill: #fff; stroke: #6b7385; stroke-width: 2.5; }
+.p2-aws rect { fill: #fff; stroke: #6b7385; stroke-width: 2; }
+
+/* 우량계 */
+.p2-gauge .funnel { fill: #dfe7f1; stroke: #6b7385; stroke-width: 2.5; stroke-linejoin: round; }
+.p2-gauge .tube { fill: rgba(255, 255, 255, .8); stroke: #6b7385; stroke-width: 2.5; }
+.p2-gauge .water { fill: #5b9bf0; transition: none; }
+.p2-gauge .tick { stroke: #6b7385; stroke-width: 2; }
+.p2-drops line { stroke: #2b6fe3; stroke-width: 3; stroke-linecap: round; opacity: 0; }
+.raining .p2-drops line { animation: p2-drop .8s linear infinite; }
+@keyframes p2-drop { 0% { opacity: 0; transform: translateY(-10px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(40px); } }
+
+/* 기압과 바람 */
+.p2-col rect { stroke-width: 2; }
+.p2-col.high rect { fill: rgba(214, 69, 69, .08); stroke: #d64545; }
+.p2-col.low rect { fill: rgba(43, 111, 227, .08); stroke: #2b6fe3; }
+.p2-col circle { fill: #9aa3b2; opacity: .7; }
+.p2-compass { fill: var(--panel-2); stroke: var(--line-2); stroke-width: 2; }
+.p2-cdot { fill: var(--ink); }
+line.tick { stroke: #9aa3b2; stroke-width: 2; }
+line.tick.main { stroke: var(--ink-2); stroke-width: 3; }
+
+/* 해륙풍 · 수륙 분포 */
+.p2-landb { fill: #cdb993; }
+.p2-landb.hot { fill: #e8a765; }
+.p2-landb.cold { fill: #b9c7d8; }
+.p2-seab { fill: #7fb2e8; }
+.p2-sch .p2-seab { fill: #d7e8f8; }
+.p2-sch .p2-landb { fill: #e7dcc4; stroke: #b8a488; stroke-width: 2; }
+
+/* 위도와 태양 에너지 */
+.p2-earth { fill: #cdb993; stroke: none; }
+.p2-surf { stroke: #7a6547; stroke-width: 3; }
+.p2-beam { fill: rgba(255, 216, 74, .35); }
+.p2-ray { stroke: #f2b705; stroke-width: 2.5; }
+.p2-foot { stroke: #e0483a; stroke-width: 7; stroke-linecap: round; }
+.p2-mini circle { fill: #dcebfa; stroke: #6b7385; stroke-width: 2; }
+.p2-mini line { stroke: #c0392b; stroke-width: 2; }
+.p2-mini .pos { fill: #e0483a; stroke: #fff; }
+.p2-in { fill: none; stroke: #e2632b; stroke-width: 3.5; }
+.p2-out { fill: none; stroke: #2878d8; stroke-width: 3.5; stroke-dasharray: 9 5; }
+.p2-sur { fill: rgba(226, 99, 43, .2); }
+.p2-def { fill: rgba(40, 120, 216, .2); }
+.p2-lbl.sur-t { fill: #c04e1c; }
+.p2-lbl.def-t { fill: #1f68c4; }
+
+/* 지형 */
+.p2-alt-city circle { fill: #ffd84a; stroke: var(--ink); stroke-width: 2.5; }
+.p2-hiker circle { fill: var(--nc); stroke: #fff; stroke-width: 3; }
+.p2-wet { fill: #2f9e5b; }
+.p2-dry { fill: #e2a13b; }
+
+/* 지도 위 겹침 (지도 단위라 선 굵기는 화면 기준으로) */
+.p2-ov text { font-family: var(--font); font-weight: 900; paint-order: stroke; stroke: rgba(255, 255, 255, .92); stroke-linejoin: round; }
+.p2-cur .ga-l { fill: none; stroke-linecap: round; }
+.p2-cur.warm .ga-l { stroke: #e0483a; }
+.p2-cur.warm .ga-h { fill: #e0483a; }
+.p2-cur.cold .ga-l { stroke: #2878d8; }
+.p2-cur.cold .ga-h { fill: #2878d8; }
+.p2-cur-t.warm { fill: #c0392b; }
+.p2-cur-t.cold { fill: #1f5fb4; }
+.p2-msn .ga-l { fill: none; stroke-linecap: round; }
+.p2-msn.wet .ga-l { stroke: #2b6fe3; } .p2-msn.wet .ga-h { fill: #2b6fe3; }
+.p2-msn.dry .ga-l { stroke: #8a5a2b; } .p2-msn.dry .ga-h { fill: #8a5a2b; }
+.p2-msn-t { fill: var(--ink); }
+.p2-press circle { stroke: #fff; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+.p2-press.high circle { fill: #d64545; }
+.p2-press.low circle { fill: #2b6fe3; }
+.p2-ov .p2-press-t { fill: #fff; stroke: none; }
+.p2-press-n { fill: var(--ink-2); }
+.p2-mass { cursor: pointer; }
+.p2-mass ellipse { stroke-width: 2.5px; vector-effect: non-scaling-stroke; opacity: .85; }
+.p2-mass.c0 ellipse { fill: rgba(40, 120, 216, .25); stroke: #2878d8; }
+.p2-mass.c2 ellipse { fill: rgba(47, 158, 143, .25); stroke: #2f9e8f; }
+.p2-mass.c3 ellipse { fill: rgba(226, 99, 43, .22); stroke: #e2632b; }
+.p2-mass:hover ellipse, .p2-mass.on ellipse { stroke-width: 4.5px; opacity: 1; }
+.p2-mass.on ellipse { stroke: var(--ink); }
+.p2-mass-t { fill: var(--ink); }
+.p2-baiu { fill: none; stroke: #394155; }
+.p2-baiu-w { fill: #e0483a; }
+.p2-baiu-c { fill: #2878d8; }
+.p2-baiu-t { fill: var(--ink); }
+
+/* ---------- 2-1 생각해 보기 · 2-2 탐구 질문의 답 · 요인 사슬 ---------- */
+.p2-think { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 2vw, 34px); }
+.p2-think-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 24px); }
+.p2-tc {
+  display: flex; flex-direction: column; align-items: center; gap: .5em; padding: clamp(18px, 2vw, 34px) 16px; border-radius: 20px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line); border-top: 7px solid var(--nc); box-shadow: var(--shadow-soft);
+}
+.p2-tc-emo { font-family: var(--emoji); font-size: 3em; line-height: 1; }
+.p2-tc b { font-size: 1.5em; font-weight: 900; color: var(--nc); }
+.p2-tc .p2-ans { font-size: 1.02em; font-weight: 700; line-height: 1.5; color: var(--ink-2); }
+.p2-think-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+
+.p2-answers { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 24px); }
+.p2-an {
+  display: flex; flex-direction: column; align-items: flex-start; gap: .8em; padding: clamp(16px, 1.8vw, 30px); border-radius: 20px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-soft);
+}
+.p2-an-q { font-size: 1.3em; font-weight: 900; line-height: 1.4; letter-spacing: -.02em; }
+.p2-an-a { display: flex; flex-direction: column; gap: .7em; width: 100%; padding-top: .8em; border-top: 1px dashed var(--line-2); }
+.p2-an-a p { font-size: 1.12em; font-weight: 800; line-height: 1.5; color: #23804a; }
+.p2-an-go { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.p2-an-go .go-chip { cursor: pointer; font-family: inherit; }
+.p2-an-note { flex: none; font-size: .82em; font-weight: 700; color: var(--muted); }
+
+.p2-chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.p2-chain span {
+  display: flex; flex-direction: column; justify-content: center; padding: .5em 1.1em; border-radius: 14px;
+  font-size: 1.12em; font-weight: 900; background: var(--panel); border: 2px solid var(--line);
+}
+.p2-chain small { font-size: .7em; font-weight: 700; color: var(--muted); }
+.p2-chain .c1 { color: #b8700c; border-color: #d98a1c; background: #fdf5e8; }
+.p2-chain .c2 { color: var(--accent-ink); border-color: var(--accent); background: var(--accent-soft); }
+.p2-chain .c3 { color: #23804a; border-color: #2f9e5b; background: #eaf7ef; }
+.p2-chain i { align-self: center; font-style: normal; font-size: 1.4em; font-weight: 900; color: var(--faint); }
+
+/* ---------- 움직임 줄이기 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .p2-rain line, .p2-arrow.wind line, .p2-arrow.up line, .raining .p2-drops line { animation: none; }
+  .raining .p2-drops line { opacity: 1; }
+  .nd-card { transition: none; }
+  .nd-card:hover { transform: none; }
+}
+
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 1100px) {
+  .nd-groups.g2 { grid-template-columns: 1fr; }
+  .nd-cards { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .nd-stage { grid-template-columns: 1fr; grid-template-rows: auto minmax(360px, 1fr); }
+  .nd-text { overflow: visible; }
+}
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .nd, .nd-hub, .nd-view, .nd-stage, .nd-fig, .p2-body, .p2-stack { flex: none; min-height: 0; }
+  .nd-stage { display: flex; flex-direction: column; }
+  .nd-cards { grid-template-columns: 1fr 1fr; }
+  .nd-card::after { display: none; }
+  .p2-figwrap { flex: none; aspect-ratio: 5 / 3; min-height: 0; }
+  .p2-figwrap.sch { aspect-ratio: auto; height: 110px; }
+  .p2-duo, .p2-duo.wide { display: flex; flex-direction: column; }
+  .p2-mapbox { flex: none; min-height: 0; }
+  .p2-mapbox .wm { min-width: 0; width: 100%; }
+  .p2-mapbox .wm-stage { width: 100%; min-height: 0; aspect-ratio: auto; height: 250px; }
+  .p2-row { flex-wrap: wrap; }
+  .p2-row > .p2-big { min-width: 42%; }
+  .p2-scales, .p2-think-cards, .p2-answers { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   PART 2 보강 (2026-09-29) — 단계 애니메이션 · 흐르는 화살표 · 사진 칸 · 다음 소주제 · 추가 문제
+   ============================================================ */
+.p2-ctl { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.p2-ctl:empty { display: none; }
+
+/* 비가 내리는 원리 — 단계 (data-st: 0 상승 · 1 냉각 · 2 응결 · 3 구름 · 4 강수) */
+.p2-scene.lift .lf-cloud, .p2-scene.lift .lf-rain, .p2-scene.lift .lf-cool, .p2-scene.lift .p2-cond { transition: opacity .6s, transform .6s; }
+.p2-scene.lift .lf-cloud { transform-box: fill-box; transform-origin: center; }
+.p2-scene.lift[data-st="0"] .lf-cloud, .p2-scene.lift[data-st="1"] .lf-cloud { opacity: 0; transform: scale(.3); }
+.p2-scene.lift[data-st="2"] .lf-cloud { opacity: .5; transform: scale(.6); }
+.p2-scene.lift .lf-rain { opacity: 0; }
+.p2-scene.lift[data-st="4"] .lf-rain { opacity: 1; }
+.p2-scene.lift .lf-cool { opacity: 0; fill: #2878d8; font-weight: 800; }
+.p2-scene.lift[data-st="1"] .lf-cool, .p2-scene.lift[data-st="2"] .lf-cool { opacity: 1; }
+.p2-scene.lift[data-st="1"] .p2-cond, .p2-scene.lift[data-st="2"] .p2-cond { stroke: #2878d8; stroke-width: 3; }
+
+/* 기압과 바람 — 공기 알갱이 */
+.p2-parts circle { fill: #fff; stroke: var(--nc, #2b6fe3); stroke-width: 2.5; animation: p2-move calc(var(--sp, 1.2s) * 2.2) linear infinite; }
+@keyframes p2-move { 0% { transform: translateX(0); opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(176px); opacity: 0; } }
+
+/* 장면 바뀜 — 부드럽게 나타남 */
+.p2-scene.fade > svg, .p2-mapbox.fade .p2-ov > * { animation: p2-in .55s ease-out; }
+@keyframes p2-in { from { opacity: 0; } }
+
+/* 육지와 바다 — 온도계 눈금이 다른 빠르기로 오르내림 */
+.p2-scene.ls .ls-lv { transform-box: fill-box; transform-origin: 50% 100%; }
+.p2-scene.ls .ls-sum, .p2-scene.ls .ls-win, .p2-scene.ls .ls-sky { transition: opacity .8s, fill .8s; }
+.p2-scene.ls .ls-win { opacity: 0; }
+.p2-scene.ls .winter .ls-sum { opacity: 0; }
+.p2-scene.ls .winter .ls-win { opacity: 1; }
+.p2-scene.ls .winter .ls-sky { fill: #dde6f1; }
+.p2-scene.ls .ls-land { transition: fill 1s; }
+
+/* 해류·계절풍 — 점선이 화살표 방향으로 흐름 */
+.ga-l.flow { animation: p2-flow 1.6s linear infinite; }
+@keyframes p2-flow { to { stroke-dashoffset: var(--dl); } }
+
+/* 산을 넘는 공기 덩어리 */
+.p2-parcel circle { stroke: #fff; stroke-width: 3; }
+.p2-parcel text { font-size: 15px; font-weight: 900; fill: #fff; }
+
+/* 장마 전선 북상 */
+.p2-baiu-g { transition: transform 1.4s cubic-bezier(.4, 0, .2, 1); }
+
+/* 사진 칸 — 그림 모서리 (사진 파일이 있을 때만 나타남) */
+.p2-mapwrap { position: relative; min-width: 0; min-height: 0; display: flex; }
+.p2-mapwrap > .p2-mapbox { flex: 1; min-width: 0; }
+.photo.p2-ph { position: absolute; z-index: 2; width: 30%; height: 40%; border: 3px solid #fff; }
+.photo.p2-ph .ph-cap { font-size: .72em; }
+.photo.p2-ph .ph-credit { font-size: 9.5px; }
+.photo.p2-ph.tl { left: 10px; top: 10px; }
+.photo.p2-ph.tr { right: 10px; top: 10px; }
+.photo.p2-ph.bl { left: 10px; bottom: 10px; }
+.photo.p2-ph.br { right: 10px; bottom: 10px; }
+
+/* 다음 소주제 */
+.nd-next {
+  align-self: flex-end; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 9px 18px; border-radius: 999px; cursor: pointer; font-size: .82em; font-weight: 700;
+  color: var(--nc); background: var(--panel); border: 2px solid var(--nc);
+}
+.nd-next b { font-weight: 900; }
+.nd-next:hover { color: #fff; background: var(--nc); }
+
+/* 해안 사막 문제 지도 */
+.coast-map { width: 100%; height: auto; max-height: 100%; border-radius: 12px; }
+.cm-pt circle { fill: #394155; stroke: #fff; stroke-width: 1.2; }
+.cm-pt text { font-size: 8px; font-weight: 900; fill: #fff; font-family: var(--font); }
+
+@media (prefers-reduced-motion: reduce) {
+  .p2-parts circle, .ga-l.flow, .p2-scene.fade > svg, .p2-mapbox.fade .p2-ov > * { animation: none; }
+  .p2-baiu-g { transition: none; }
+}
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .photo.p2-ph { width: 38%; height: 44%; }
+  .p2-mapwrap { flex: none; }
+}
+.p2-mapwrap .photo.p2-ph { width: 46%; height: 32%; }
+
+/* ============================================================
+   2차 보강 (2026-09-29) — 노드 카드 여백 · 탐구 질문의 답 · 도시로 읽는 기후 요인
+   ============================================================ */
+/* 2-2 노드 카드(7장): 늘어난 빈 공간 없이 내용 높이로, 가운데 배치 */
+.nd-groups.g2 { flex: none; margin: auto 0; }
+.g2 .nd-cards { flex: none; }
+.g2 .nd-card { gap: .5em; }
+.g2 .nd-card-go { margin-top: .5em; }
+@media (min-width: 1500px) {
+  .g2 .nd-card { font-size: 1.12em; padding: 22px 20px; }
+  .g2 .nd-card-emo { font-size: 2.6em; }
+}
+.p2-answers { align-items: start; align-content: center; }
+
+/* 도시로 읽는 기후 요인 */
+.rc-pick { flex: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-b { padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: .9em; font-weight: 800; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line); }
+.rc-b.on { color: #fff; background: var(--ink-2); border-color: var(--ink-2); }
+.rc-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(14px, 1.6vw, 28px); align-items: center; animation: p2-in .4s ease-out; }
+.rc-graph { min-height: 0; display: flex; flex-direction: column; }
+.rc-graph .cg-svg { height: auto; max-height: calc(100vh - 300px); }
+.rc-side { display: flex; flex-direction: column; gap: 12px; }
+.rc-fact { padding: 14px 18px; border-radius: 14px; font-size: 1.18em; font-weight: 900; line-height: 1.45; background: #fff8e8; border-left: 6px solid #e0a800; }
+.rc-f {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; cursor: pointer; text-align: left;
+  font-size: 1.05em; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line); border-left: 7px solid var(--nc); box-shadow: var(--shadow-soft);
+}
+.rc-f:hover { border-color: var(--nc); }
+.rc-f-emo { font-family: var(--emoji); font-size: 1.8em; line-height: 1; }
+.rc-f-t { display: flex; flex-direction: column; gap: 2px; font-weight: 700; line-height: 1.45; }
+.rc-f-t b { font-size: 1.1em; font-weight: 900; color: var(--nc); }
+.rc-f-go { font-weight: 900; color: var(--nc); }
+@media (max-width: 1100px) { .rc-body { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   선생님 수정 반영 (2026-09-29) — 노드 화면 가독성 · 시뮬레이터형 그림 (chapters/part2-sims.js)
+   ============================================================ */
+/* 그림 전체: 그라데이션 하늘·땅·바다·산 */
+.p2-sky { fill: url(#p2g-sky); }
+.p2-sky.night { fill: url(#p2g-night); }
+.p2-grass { fill: url(#p2g-grass); }
+.p2-ground { fill: url(#p2g-ground); }
+.p2-seab { fill: url(#p2g-sea); }
+.p2-mtn { fill: url(#p2g-mtn); stroke: #6d5035; }
+.p2-sun circle { fill: url(#p2g-sun); stroke: #f2b705; }
+.p2-cloud { filter: url(#p2f-soft); }
+.p2-shelter rect, .p2-shelter .roof { filter: none; }
+
+/* 노드 카드: 소주제 목록 없음 → 가운데 정렬 */
+.nd-hub .nd-card:not(.nd-card--link) { justify-content: center; }
+.g1 .nd-card { gap: .8em; }
+
+/* 노드 화면 — 설명 가독성 */
+.nd-text { justify-content: center; gap: 1.1em; padding: clamp(20px, 2vw, 34px); }
+.nd-t-title { font-size: 1.55em; }
+.nd-pts { gap: .75em; }
+.nd-pts li {
+  padding: .7em .95em .7em 2.1em; border-radius: 14px; font-size: 1.14em; line-height: 1.55; color: var(--ink);
+  background: color-mix(in srgb, var(--nc) 7%, #fff); border: 1px solid color-mix(in srgb, var(--nc) 18%, #fff);
+}
+.nd-pts li::before { left: .85em; top: 1.2em; width: .5em; height: .5em; }
+.nd-pts b { color: color-mix(in srgb, var(--nc) 75%, #000); }
+.nd-terms { margin-top: .4em; }
+.nd-term { font-size: .88em; padding: 4px 12px; }
+@media (min-width: 1500px) { .nd-pts li { font-size: 1.2em; } }
+
+/* 공통: 시뮬레이터 조절 줄 */
+.p2-ctl .anim-btn { font-size: .82em; }
+.hs-auto { display: inline-flex; align-items: center; gap: 6px; font-size: .82em; font-weight: 800; color: var(--muted); cursor: pointer; }
+.fp circle { fill: #fff; stroke-width: 0; }
+.p2-cur.warm .fp circle { fill: #ffe1d6; }
+.p2-cur.cold .fp circle { fill: #e2f0ff; }
+.p2-msn .fp circle { fill: #fff; }
+
+/* 기온 ① 의미 — 하루 기온 */
+.tm-sky { transition: fill .6s; }
+.tm-svg.dusk .tm-sky { fill: url(#p2g-night); }
+.tm-arc { fill: none; stroke: #f2b705; stroke-width: 2; stroke-dasharray: 4 8; opacity: .5; }
+.tm-th rect:first-child { fill: #fff; stroke: #6b7385; stroke-width: 2; }
+.tm-th circle { fill: #e0483a; stroke: #6b7385; stroke-width: 2; }
+.tm-th .lv { fill: #e0483a; transform-box: fill-box; transform-origin: 50% 100%; transition: transform .35s; }
+.tm-th.b circle, .tm-th.b .lv { fill: #f0883a; }
+.tm-heat path { fill: none; stroke: #f0883a; stroke-width: 2.5; stroke-linecap: round; animation: tm-heat 1.6s ease-in-out infinite alternate; }
+.tm-heat path:nth-child(2) { animation-delay: .4s; } .tm-heat path:nth-child(3) { animation-delay: .8s; }
+@keyframes tm-heat { to { transform: translateY(-6px); opacity: .5; } }
+.tm-clock { font-size: 26px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+.tm-svg.dusk .tm-clock { fill: #fff; stroke: #1c2748; }
+.tm-read .p2-big.warm .p2-big-v { color: #e06a2b; }
+
+/* 기온 ② 평균 기온 */
+.tmn-line { fill: none; stroke: #e0483a; stroke-width: 4; stroke-linejoin: round; }
+.tmn-p { opacity: 0; transition: opacity .3s; }
+.tmn-p.on { opacity: 1; }
+.tmn-p circle { fill: #fff; stroke: #e0483a; stroke-width: 3; }
+.tmn-p text { font-size: 13px; font-weight: 800; fill: #a33a2c; }
+.tmn-p.now circle { fill: #e0483a; r: 10; }
+.tmn-mean { transition: transform .5s ease-out; }
+.tmn-mean line { stroke: #2b6fe3; stroke-width: 3; stroke-dasharray: 10 6; }
+.tmn-mean rect { fill: #2b6fe3; }
+.tmn-mean text { font-size: 17px; font-weight: 900; fill: #fff; }
+.tmn-mean.fin line { stroke: #c0392b; stroke-dasharray: none; stroke-width: 5; }
+.tmn-mean.fin rect { fill: #c0392b; }
+
+/* 강수 ② 공기 덩어리 */
+.lf-path { fill: none; stroke: none; }
+.lf-parcel circle { stroke: #fff; stroke-width: 3; filter: url(#p2f-soft); transition: fill .3s; }
+.lf-parcel text { font-size: 12px; font-weight: 900; fill: #1c2433; }
+.lf-parcel.cond circle { stroke: #9aa6b8; }
+
+/* 바람 ② 풍향 */
+.wd-rot { transition: transform .8s cubic-bezier(.4, 0, .2, 1); }
+.wd-st { stroke: #2f9e8f; stroke-width: 3; stroke-linecap: round; opacity: 0; animation: wd-st 1.4s linear infinite; }
+@keyframes wd-st { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: .7; } 85% { opacity: .7; } 100% { opacity: 0; transform: translateY(250px); } }
+.wd-from { font-size: 12px; font-weight: 900; fill: #2f9e8f; }
+
+/* 바람 ③ 해륙풍 순환 */
+.sb-loop { fill: none; stroke: transparent; }
+.p2-scene svg .fp circle { fill: #fff; stroke: #2f9e8f; stroke-width: 2; }
+
+/* 위도 ① 지구 · 햇빛 */
+.ls-atm { fill: rgba(120, 180, 255, .18); }
+.ls-earth { filter: url(#p2f-soft); }
+.ls-night { fill: rgba(10, 20, 50, .38); }
+.ls-lat { stroke: rgba(255, 255, 255, .55); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.ls-lat.eq { stroke: #fff; stroke-dasharray: none; stroke-width: 2; }
+.ls-latt { font-size: 13px; font-weight: 800; fill: #5a6479; }
+.ls-ray { stroke: #f2c230; stroke-width: 2; opacity: .55; }
+.ls-beam { fill: rgba(255, 210, 60, .55); }
+.ls-beam.z { fill: rgba(255, 210, 60, .45); }
+.ls-foot { fill: none; stroke: #e0483a; stroke-width: 7; stroke-linecap: round; }
+.ls-pin { fill: #e0483a; stroke: #fff; stroke-width: 3; }
+.ls-gnd { fill: url(#p2g-ground); }
+.ls-hit { fill: #e0483a; }
+.ls-angle { fill: none; stroke: #394155; stroke-width: 2; }
+.ls-angt { font-size: 15px; font-weight: 900; fill: var(--ink); }
+.ls-gbg { fill: var(--panel-2); stroke: var(--line); }
+.ls-gfill { transition: y .4s, height .4s; }
+.ls-gt { font-size: 20px; font-weight: 900; fill: var(--ink); }
+.ls-gs { font-size: 13px; font-weight: 800; fill: var(--muted); }
+
+/* 위도 ③ 열 이동 화살표 흐름 */
+.lb-flow .p2-arrow.warm line { stroke-dasharray: 10 7; animation: p2-dash 1s linear infinite; }
+
+/* 수륙 분포 ① 가열·냉각 시뮬레이터 */
+.hs-sky { fill: url(#p2g-sky); transition: fill .8s; }
+.hs-svg.night .hs-sky { fill: url(#p2g-night); }
+.hs-sun, .hs-rays { transition: opacity .8s; }
+.hs-moon { opacity: 0; transition: opacity .8s; }
+.hs-moon circle { fill: #f3f0d8; }
+.hs-svg.night .hs-sun, .hs-svg.night .hs-rays { opacity: 0; }
+.hs-svg.night .hs-moon { opacity: 1; }
+.hs-rays line { stroke: #f7c948; stroke-width: 3; stroke-dasharray: 6 8; animation: p2-dash 1s linear infinite; }
+.hs-land { fill: url(#p2g-ground); }
+.hs-waves path { fill: none; stroke: rgba(255, 255, 255, .6); stroke-width: 3; stroke-linecap: round; animation: hs-wave 2.4s ease-in-out infinite alternate; }
+@keyframes hs-wave { to { transform: translateX(14px); } }
+.hs-th rect:first-child { fill: #fff; stroke: #6b7385; stroke-width: 2; }
+.hs-th circle, .hs-th .lv { fill: #e0483a; }
+.hs-th.sea circle, .hs-th.sea .lv { fill: #2b6fe3; }
+.hs-th circle { stroke: #6b7385; stroke-width: 2; }
+.hs-th .lv { transform-box: fill-box; transform-origin: 50% 100%; }
+.hs-num { font-size: 26px; font-weight: 900; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .35); stroke-width: 4px; }
+.hs-l { fill: none; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+.hs-l.land { stroke: #e0483a; } .hs-l.sea { stroke: #2b6fe3; }
+.hs-bands rect { fill: rgba(255, 214, 80, .22); }
+.hs-lg-t { font-size: 13px; fill: var(--muted); }
+
+/* 지형 ① 산 오르기 */
+.ta-mtn { fill: none; stroke: #6d5035; stroke-width: 2.5; stroke-linejoin: round; }
+.ta-bands rect { opacity: .92; }
+.ta-hiker > circle { fill: var(--nc); stroke: #fff; stroke-width: 3; filter: url(#p2f-soft); }
+.ta-th rect:first-child { fill: #fff; stroke: #6b7385; stroke-width: 2; }
+.ta-th circle { fill: #e0483a; stroke: #6b7385; stroke-width: 2; }
+.ta-th .lv { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .2s; }
+.ta-tag { fill: #1c2433; opacity: .82; }
+.ta-tagt { font-size: 14px; font-weight: 900; fill: #fff; }
+
+/* 지형 ② 공기 덩어리 시뮬레이터 */
+.tsh-path { fill: none; stroke: rgba(80, 90, 110, .35); stroke-width: 2; stroke-dasharray: 3 7; }
+.tsh-parcel circle { stroke: #fff; stroke-width: 3; filter: url(#p2f-soft); transition: fill .2s; }
+.tsh-parcel text { font-size: 13px; font-weight: 900; fill: #1c2433; }
+.tsh-cloud { opacity: 0; transition: opacity .5s; }
+.tsh-svg.raining .tsh-cloud { opacity: 1; }
+.tsh-dryglow { fill: rgba(240, 136, 58, .0); transition: fill .6s; }
+.tsh-svg.dry .tsh-dryglow { fill: rgba(240, 136, 58, .16); }
+.tsh-mtn { fill: url(#p2g-mtn); }
+
+/* 기단 — 계절 */
+.p2-mass.dim { opacity: .28; }
+.am-ar .ga-l { fill: none; stroke-linecap: round; }
+.am-ar.c0 .ga-l { stroke: #4a6fb5; } .am-ar.c0 .ga-h { fill: #4a6fb5; }
+.am-ar.c2 .ga-l { stroke: #3aa0b8; } .am-ar.c2 .ga-h { fill: #3aa0b8; }
+.am-ar.c3 .ga-l { stroke: #e07a3a; } .am-ar.c3 .ga-h { fill: #e07a3a; }
+.am-kr { fill: #e0483a; stroke: #fff; stroke-width: .6; }
+
+/* 전선 — 두 기단이 만나는 과정 (data-st: 0 두 기단 · 1 다가감 · 2 전선 · 3 상승 · 4 구름·비) */
+.fr .fr-box { transition: transform 1s ease-in-out, opacity .6s; }
+.fr .fr-met, .fr .fr-rise, .fr .fr-cloud, .fr .fr-rain { transition: opacity .6s; }
+.fr[data-st="1"] .fr-box.warm { transform: translateX(60px); }
+.fr[data-st="1"] .fr-box.cold { transform: translateX(-60px); }
+.fr[data-st="2"] .fr-box, .fr[data-st="3"] .fr-box, .fr[data-st="4"] .fr-box { opacity: 0; }
+.fr[data-st="0"] .fr-met, .fr[data-st="1"] .fr-met { opacity: 0; }
+.fr[data-st="0"] .fr-rise, .fr[data-st="1"] .fr-rise, .fr[data-st="2"] .fr-rise { opacity: 0; }
+.fr[data-st="0"] .fr-cloud, .fr[data-st="1"] .fr-cloud, .fr[data-st="2"] .fr-cloud, .fr[data-st="3"] .fr-cloud { opacity: 0; }
+.fr .fr-rain { opacity: 0; }
+.fr[data-st="4"] .fr-rain { opacity: 1; }
+.fr-path { fill: none; stroke: none; }
+.fr-parcel circle { stroke: #fff; stroke-width: 3; }
+
+/* 장마 전선 비구름 띠 */
+.p2-baiu-band { fill: rgba(43, 111, 227, .22); stroke: rgba(43, 111, 227, .35); stroke-width: .3; }
+
+/* 정리 — 그림 카드 목록 · 둥실 아이콘 · 다음 안내 */
+.sum-card.has-l { align-items: stretch; text-align: left; }
+.sum-card.has-l .sum-emo, .sum-card.has-l .sum-t { align-self: center; }
+.sum-l { display: grid; gap: .5em; margin-top: .3em; }
+.sum-l li { position: relative; padding: .55em .8em .55em 1.9em; border-radius: 12px; font-size: 1.08em; font-weight: 700; line-height: 1.45; color: var(--ink-2);
+  background: color-mix(in srgb, var(--sc) 8%, #fff); }
+.sum-l li::before { content: ""; position: absolute; left: .75em; top: 1.05em; width: .45em; height: .45em; border-radius: 50%; background: var(--sc); }
+.sum-l b { color: var(--sc); }
+.sum-emo.float { animation: sum-float 3s ease-in-out infinite; animation-delay: calc(var(--i) * .4s); }
+@keyframes sum-float { 50% { transform: translateY(-8px); } }
+.sum-cards.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sum-cards.g3 .sum-card { padding: clamp(16px, 1.6vw, 26px); gap: .4em; }
+.sum-cards.g3 .sum-emo { font-size: clamp(30px, 2.8vw, 48px); }
+.sum-cards.g3 .sum-t { font-size: 1.35em; }
+.sum-cards.g3 .sum-l li { font-size: 1em; }
+.sum-next { max-width: 1500px; width: 100%; margin: 0 auto; font-size: 1.05em; font-weight: 700; color: var(--muted); text-align: center; }
+.sum-next b { color: var(--accent-ink); }
+@media (max-width: 1100px) { .sum-cards.g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .sum-cards.g3 { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .sum-emo.float, .wd-st, .tm-heat path, .hs-waves path, .hs-rays line { animation: none; } .wd-st { opacity: .5; } }
+.tmn-ctl .anim-step i { display: none; }
+.tmn-ctl .anim-step { padding: 5px 9px; }
+.tmn-ctl .anim-steps { gap: 3px; }
+.wd-svg ~ .photo.p2-ph { width: 23%; height: 34%; }
+.p2-cur.warm .fp circle { fill: #a8190f; }
+.p2-cur.cold .fp circle { fill: #0b3f8c; }
+.p2-msn.wet .fp circle { fill: #0b3f8c; } .p2-msn.dry .fp circle { fill: #5a3a18; }
+.am-ar .fp circle { fill: #1c2433; }
+.g2 .nd-cards { align-items: stretch; }
+.nd-hub .g2 .nd-card:not(.nd-card--link), .g2 .nd-card { justify-content: flex-start; min-height: 16.5em; }
+.p2-ctl .anim-bar { flex: 1 1 auto; min-width: 0; max-width: 100%; }
+.p2-ctl .anim-steps { min-width: 0; }

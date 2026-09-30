@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>대기대순환 3D — 지구의 바람 흐름이 비와 기후를 만드는 과정</title>
+<link rel="stylesheet" href="assets/fonts/aocsans.css">  <!-- 내장 글꼴(Pretendard 기반, OFL) -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ====================== 레이아웃 ====================== -->
+<div class="layout">
+
+  <!-- 사이드바를 열기 위한 손잡이 (닫혔을 때 노출) -->
+  <button class="sidebar-handle" id="sidebar-handle" aria-label="패널 열기" title="패널 열기">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
+    </svg>
+  </button>
+
+  <!-- 좌측 통합 패널 (모바일에서는 하단 시트로 전환) -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- 모바일 하단 시트 바: 위로 스와이프 = 패널 열기 · 좌우 스와이프/화살표 = 단계 이동 -->
+    <div class="sheet-bar" id="sheet-bar" aria-label="단계 이동 및 조작 패널 열기">
+      <div class="grip" aria-hidden="true"></div>
+      <div class="sheet-row">
+        <button class="sb-arrow" id="sheet-prev" aria-label="이전 단계">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="sb-info">
+          <span class="sb-step" id="sheet-step">시작하기</span>
+          <span class="sb-title" id="sheet-title">위로 쓸어올려 패널 열기 · 좌우로 단계 이동</span>
+        </div>
+        <button class="sb-arrow" id="sheet-next" aria-label="다음 단계">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 사이드바 맨 위: 프로그램 이름 + 패널 접기 -->
+    <div class="sidebar-head">
+      <div class="brand">
+        <span class="glyph" aria-hidden="true">🌍</span>
+        <div>
+          <h1>대기대순환 3D</h1>
+          <div class="sub">지구의 바람 흐름이 비와 기후를 만드는 과정</div>
+        </div>
+      </div>
+      <button class="close" id="sidebar-close" aria-label="패널 접기" title="패널 접기">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- 이해하기: 단계 목록 (누르면 그 단계의 첫 장면부터) -->
+      <div class="section">
+        <div class="label">이해하기</div>
+        <ol class="step-list" id="step-list"></ol>
+      </div>
+
+      <!-- 계절 슬라이더 — 8단계 장면이 계절을 정함. 화면에는 숨김(내부 동기화용) -->
+      <div class="section" id="season-section" hidden>
+        <div class="season">
+          <input type="range" id="season" min="-1" max="1" step="0.01" value="0" aria-label="계절 슬라이더">
+          <div class="readout" id="season-readout"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 사이드바 하단: 이용 방법 (누르면 상세 안내 창) -->
+    <div class="sidebar-foot">
+      <button class="help-btn" id="help-btn" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.3-2.7 4"/><line x1="12" y1="17.6" x2="12" y2="17.7"/>
+        </svg>
+        이용 방법
+      </button>
+    </div>
+  </aside>
+
+  <!-- 3D 무대 -->
+  <main class="stage">
+    <canvas id="scene" aria-label="대기대순환 3차원 시각화"></canvas>
+
+    <!-- 위도대 정보 카드 -->
+    <section class="card" id="card" aria-live="polite">
+      <div class="card-top">
+        <span class="dot" id="card-dot"></span>
+        <div class="card-titles">
+          <h3 id="card-title"></h3>
+          <span class="term" id="card-term"></span>
+        </div>
+        <span class="lat" id="card-lat"></span>
+        <button class="x" id="card-close" aria-label="카드 닫기">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="row"><span class="k move">공기의 움직임</span><span class="v" id="card-move"></span></div>
+        <div class="row"><span class="k rain">비와 건조</span><span class="v" id="card-rain"></span></div>
+        <div class="row"><span class="k region">대표 기후·지역</span><span class="v" id="card-region"></span></div>
+        <div class="sum" id="card-sum"></div>
+      </div>
+    </section>
+
+
+    <!-- 그림 자료 (장면에서 fig로 표시) -->
+    <figure class="fig" id="fig-energy" data-fig="energy" aria-hidden="true">
+      <figcaption>위도별로 받는 에너지와 내보내는 에너지</figcaption>
+      <div class="fig-plot"></div>
+      <div class="fig-legend">
+        <span><i class="ln absorb"></i>흡수하는 태양 에너지</span>
+        <span><i class="ln emit"></i>내보내는 지구 에너지</span>
+      </div>
+    </figure>
+
+    <figure class="fig fig-orbit" id="fig-orbit" data-fig="orbit" aria-hidden="true">
+      <figcaption>지구의 공전과 계절</figcaption>
+      <div class="fig-plot"></div>
+      <div class="fig-sub">자전축은 늘 같은 방향으로 <b>23.5°</b> 기울어져 있어요</div>
+      <div class="fig-note"></div>
+    </figure>
+
+    <!-- 장면 재생기: 화면 자막 + 질문/답 + 진행 막대 (engine.js) -->
+    <div class="player" id="player">
+      <div class="cap" id="cap" aria-live="polite">
+        <div class="cap-step" id="cap-step">시작하기</div>
+        <p class="cap-text" id="cap-text"></p>
+        <div class="cap-q" id="cap-q" hidden>
+          <div class="q-row"><span class="q-mark" aria-hidden="true">💭</span><span id="cap-q-text"></span></div>
+          <button class="a-btn" id="cap-a-btn">답 보기 <kbd>A</kbd></button>
+          <div class="cap-a" id="cap-a" hidden></div>
+        </div>
+      </div>
+      <div class="transport" role="group" aria-label="장면 이동">
+        <button class="tp" id="tp-prev" aria-label="이전 장면" title="이전 장면 (←)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="dots" id="tp-dots"></div>
+        <button class="tp primary" id="tp-next" aria-label="다음 장면" title="다음 장면 (→)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <span class="tp-sep" aria-hidden="true"></span>
+        <button class="tp" id="tp-replay" aria-label="이 단계 처음부터" title="이 단계 처음부터 (R)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>
+        </button>
+        <button class="tp auto" id="tp-auto" aria-pressed="false" title="자동 재생 — 자막 길이에 맞춰 장면이 넘어갑니다">자동</button>
+        <button class="tp auto speed" id="tp-speed" title="애니메이션 속도 — 느리게 · 보통 · 빠르게 (S)">보통</button>
+      </div>
+    </div>
+
+    <button class="present-exit" id="present-exit" title="발표 모드 끝내기 (Esc)">발표 종료 <kbd>Esc</kbd></button>
+  </main>
+</div>
+
+
+<!-- 이용 방법 안내 창 (사이드바 하단 버튼) -->
+<div class="modal" id="help-modal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-head">
+      <h2 id="help-title">이용 방법</h2>
+      <button class="modal-x" data-close aria-label="닫기">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="17" y1="7" x2="7" y2="17"/><line x1="7" y1="7" x2="17" y2="17"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+        <div class="hint">
+        <ul>
+          <li>화면 아래 <b>▶</b>를 누를 때마다 설명과 함께 <b>장면이 하나씩</b> 진행됩니다.</li>
+          <li>왼쪽 <b>「이해하기」</b>에서 단계를 누르면 그 단계의 첫 장면부터 시작해요.</li>
+          <li>패널 위쪽 <b>«</b> 버튼으로 패널을 접으면 3D 화면을 넓게 쓸 수 있어요(왼쪽 위 ☰로 다시 열기).</li>
+          <li>교실 TV에서는 키보드 <b>F</b>를 누르면 <b>발표 모드</b>(전체 화면·큰 자막)가 돼요. Esc로 끝내요.</li>
+          <li>지구를 <b>드래그</b>해서 돌려 보세요. <b>색깔 띠를 클릭</b>하면 설명 카드가 나타납니다.</li>
+          <li>휴대전화에서는 아래 바를 <b>위로 쓸어올려</b> 패널을 열고, <b>좌우로 쓸어</b> 장면을 넘길 수 있어요.</li>
+        </ul>
+        <div class="keys">
+          <div class="keys-title">키보드 · 발표용 리모컨</div>
+          <dl>
+            <dt><kbd>→</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd></dt><dd>다음 장면</dd>
+            <dt><kbd>←</kbd> <kbd>PgUp</kbd></dt><dd>이전 장면</dd>
+            <dt><kbd>Shift</kbd>+<kbd>→</kbd> <kbd>←</kbd></dt><dd>다음·이전 단계</dd>
+            <dt><kbd>R</kbd></dt><dd>이 단계 처음부터</dd>
+            <dt><kbd>F</kbd></dt><dd>발표 모드 (전체 화면)</dd>
+            <dt><kbd>S</kbd></dt><dd>애니메이션 속도 (느리게·보통·빠르게)</dd>
+          </dl>
+        </div>
+        <a class="guide-link" href="교사용_안내.html" target="_blank" rel="noopener">교사용 안내 · 수업 흐름 보기 ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p>지구와 대기를 준비하는 중…</p>
+</div>
+
+<!-- three.js (로컬, 오프라인) + 내장 지구 사진 + 앱 스크립트
+     ※ 순서 중요: data → steps → core → effects → globe → cross → view → ui → engine → main -->
+<script src="libs/three.min.js"></script>
+<script src="assets/earth-texture.js"></script>
+<script src="js/data.js"></script>
+<script src="js/steps.js"></script>
+<script src="js/core.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/cross.js"></script>
+<script src="js/view.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/main.js"></script>
+<script src="js/embed.js"></script>  <!-- 지오엑스-세계의 기후 앱의 틀 안에서만 동작 -->
+</body>
+</html>

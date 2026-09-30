@@ -1,0 +1,138 @@
+/* ============================================================
+   지오엑스-세계의 기후 — css/part5.css
+   PART 5 세계의 기후대 — 기후대 챕터 공통 틀 (형성 원인 · 분포 · 대표 그래프 · 세부 유형 · 식생 · 주민 생활)
+   ============================================================ */
+
+/* 형성 원인 카드 */
+.causes { flex: 1; min-height: 0; display: grid; gap: clamp(12px, 1.4vw, 24px); align-items: center; font-size: 1.08em; }
+.causes.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.causes.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cause {
+  display: flex; flex-direction: column; gap: .6em; padding: clamp(18px, 1.8vw, 32px); border-radius: 20px;
+  background: var(--panel); border: 1px solid var(--line); border-top: 6px solid var(--zc); box-shadow: var(--shadow-soft);
+}
+.cause-emo { font-family: var(--emoji); font-size: 2.8em; line-height: 1.1; }
+.cause h4 { font-size: 1.45em; font-weight: 900; color: var(--zc); }
+.cause .pts { font-size: 1.05em; }
+.cause-go { margin-top: .6em; display: flex; flex-wrap: wrap; gap: 8px; }
+.cause { min-height: 22em; }
+
+/* 판별 근거 */
+.why-box { padding: 16px 20px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-soft); }
+.why-t { font-size: .8em; font-weight: 900; color: var(--muted); margin-bottom: 8px; }
+.why-list { display: grid; gap: 8px; }
+.why-list li { display: flex; align-items: center; gap: 12px; font-size: .98em; line-height: 1.4; }
+.why-l { flex: none; width: 1.9em; height: 1.9em; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; background: var(--zc); }
+
+/* 세부 유형 비교 */
+.subgrid { flex: 1; min-height: 0; display: grid; gap: clamp(10px, 1.2vw, 20px); align-items: center; }
+.subgrid.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.subgrid.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.subgrid.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.subc {
+  min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 12px; border-radius: 18px;
+  background: var(--panel); border: 1px solid var(--line); border-top: 6px solid var(--zc); box-shadow: var(--shadow-soft);
+}
+.subc-top { display: flex; align-items: baseline; gap: 10px; }
+.subc-code { font-size: 2em; font-weight: 900; color: var(--zc); line-height: 1; }
+.subc-name { font-size: 1.05em; font-weight: 900; }
+.subc-city { font-size: .9em; font-weight: 800; color: var(--ink-2); }
+.subc-city small { color: var(--faint); font-weight: 700; }
+.subc-chart { display: flex; margin: 4px 0; }
+.subc-chart .cc { width: 100%; height: auto; max-height: calc(100vh - 420px); }
+.subc-t { font-size: .95em; font-weight: 800; color: var(--ink); line-height: 1.45; }
+.subc-s { font-size: .74em; color: var(--muted); }
+
+/* 식생 · 경관 */
+.vegs { flex: 1; min-height: 0; display: grid; gap: clamp(12px, 1.4vw, 24px); align-items: center; font-size: 1.08em; }
+.veg { min-height: 20em; }
+.vegs.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.vegs.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.veg { display: flex; flex-direction: column; gap: .6em; padding: clamp(18px, 1.8vw, 32px); border-radius: 20px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-soft); }
+.veg-emo { font-family: var(--emoji); font-size: 3.4em; line-height: 1.1; }
+.veg h4 { font-size: 1.45em; font-weight: 900; color: var(--zc); }
+.veg .pts { font-size: 1.05em; }
+
+/* 주민 생활 */
+.life { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(14px, 1.6vw, 28px); align-items: center; }
+.life-img { margin: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.life-img img { max-width: 100%; max-height: calc(100vh - 240px); border-radius: 18px; box-shadow: var(--shadow); object-fit: contain; }
+.life-cards { display: grid; gap: 10px; }
+.lc { display: grid; grid-template-columns: 5.2em 1fr; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--zc); }
+.lc-k { font-size: 1.02em; font-weight: 900; color: var(--zc); }
+.lc-d { font-size: .95em; line-height: 1.5; color: var(--ink-2); }
+
+/* 5-6 해발 고도와 기온 */
+.alt-card { padding: 16px 18px 8px; }
+.alt-svg { width: 100%; height: 100%; flex: 1; min-height: 0; font-family: var(--font); }
+.alt-grid { stroke: #e8ecf2; }
+.alt-ax { font-size: 15px; font-weight: 700; fill: #7a8394; }
+.alt-t { font-size: 19px; font-weight: 900; fill: #1b2233; }
+.alt-n { font-size: 17px; font-weight: 800; fill: #394155; }
+.alt-m { font-size: 14px; font-weight: 700; fill: #7a8394; }
+
+/* 세부 유형 범례 (지도) */
+.wm-key.sub { cursor: default; }
+.wm-key.sub b { color: var(--ink); }   /* 옅은 세부 유형 색도 글자는 읽히게 */
+.wm-key.sub:hover { border-color: var(--line); }
+
+@media (max-width: 1100px) {
+  .causes.n3, .vegs.n3, .subgrid.n3, .subgrid.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .life { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .causes.n2, .causes.n3, .vegs.n2, .vegs.n3, .subgrid.n2, .subgrid.n3, .subgrid.n4 { grid-template-columns: 1fr; }
+  .subc { min-height: 260px; }
+  .alt-card { min-height: 280px; }
+}
+
+/* ============================================================
+   PART 5 보강 (2026-09-29) — 기압대의 계절 이동 · 식생 사진 칸
+   ============================================================ */
+.belt .split-main { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.belt-fig { flex: 1; min-height: 0; display: flex; border-radius: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); }
+.belt-svg { width: 100%; height: 100%; font-family: var(--font); }
+.belt-sea { fill: #eef4fb; }
+.belt-lat { stroke: #c9d3e0; stroke-width: 1.2; stroke-dasharray: 5 5; }
+.belt-lat.eq { stroke: #8a93a6; stroke-dasharray: none; }
+.belt-ax { font-size: 15px; font-weight: 800; fill: #6b7385; }
+.belt-move { transition: transform 1s cubic-bezier(.4, 0, .2, 1); }
+.belt-b.rain { fill: rgba(43, 111, 227, .22); }
+.belt-b.dry { fill: rgba(230, 167, 0, .28); }
+.belt-t { font-size: 15px; font-weight: 900; }
+.belt-t.rain { fill: #1f5fd0; }
+.belt-t.dry { fill: #9a6a00; }
+.belt-city circle { fill: #fff; stroke: #394155; stroke-width: 4; transition: fill .4s; }
+.belt-city.wet circle { fill: #2b6fe3; }
+.belt-city.dry circle { fill: #e6a700; }
+.belt-city text { font-size: 19px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+.belt-mon { font-size: 30px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 6px; }
+.belt-side { padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.belt-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 150px; }
+.bb { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.bb i { width: 100%; border-radius: 4px 4px 0 0; background: #b9d0f3; transition: background .3s; }
+.bb span { font-size: 11px; font-weight: 800; color: var(--muted); }
+.bb.on i { background: #1f5fd0; }
+.bb.on span { color: var(--ink); }
+.belt-cap { margin-top: 6px; font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .belt-move { transition: none; } }
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) { .belt-fig { height: 300px; flex: none; } }
+
+.veg.has-ph { padding-top: clamp(10px, 1vw, 16px); }
+.photo.veg-ph { height: 11em; flex: none; }
+.belt-ctl .anim-step i { display: none; }
+.belt-ctl .anim-step { padding: 5px 10px; }
+.belt-ctl .anim-steps { margin-left: 2px; }
+.vegs { align-items: stretch; align-content: center; }
+
+/* PART 5 2차 보강 — 사진 없는 식생 카드 · 다른 도시 보기 */
+.vegs .veg:not(.has-ph) .veg-emo { height: 11em; flex: none; display: flex; align-items: center; justify-content: center; font-size: 4.2em; line-height: 1; border-radius: 14px;
+  background: color-mix(in srgb, var(--zc) 10%, #fff); }
+.vegs .veg:not(.has-ph) .veg-emo { height: calc(11em / 4.2 * 1); height: 2.62em; }
+.rep-pick { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .86em; }
+.rep-pick > span { margin-right: 4px; font-weight: 900; color: var(--muted); }
+.rep-b { padding: 6px 14px; border-radius: 999px; cursor: pointer; font-weight: 800; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line); }
+.rep-b small { font-weight: 900; color: var(--muted); }
+.rep-b.on { color: #fff; background: var(--ink-2); border-color: var(--ink-2); }
+.rep-b.on small { color: #fff; opacity: .8; }
+.rep-graph { display: flex; flex-direction: column; min-height: 0; }
