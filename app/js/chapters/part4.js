@@ -159,7 +159,7 @@ const JudgeBoard = (function () {
     {
       title: "기후 그래프 그리는 순서",
       html: '<div class="split">' +
-        '<div class="split-main graph-main"><div class="cg-build" data-st="4">' + ClimGraph.svg(seoul, { title: "서울의 기후 그래프 그리기" }) + '</div></div>' +
+        '<div class="split-main graph-main"><div class="cg-build empty" data-st="0">' + ClimGraph.svg(seoul, { title: "서울의 기후 그래프 그리기" }) + '</div></div>' +
         '<div class="split-side"><div class="build-ctl"></div>' +
           '<div class="build-say"></div>' +
         '</div></div>',
@@ -167,15 +167,17 @@ const JudgeBoard = (function () {
         /* 가로축 → 강수 막대 → 기온 점 → 선 잇기 → 완성 — 단계마다 .cg-build의 data-st를 바꿔 차례로 그려짐 */
         const host = el.querySelector(".cg-build"), say = el.querySelector(".build-say");
         const SAY = [
+          ["빈 그래프", "▶ 재생 또는 단계 버튼 → 한 단계씩 그리기"],
           ["가로축: 1월 ~ 12월", "왼쪽 눈금 = 기온(℃), 오른쪽 눈금 = 강수량(mm)"],
           ["월 강수량 → 막대", "각 달의 강수량만큼 막대를 세움 (오른쪽 눈금)"],
           ["월평균 기온 → 점", "각 달의 평균 기온 위치에 점을 찍음 (왼쪽 눈금)"],
           ["점을 선으로 잇기", "기온 변화가 한눈에 보이게 연결"],
           ["완성", "한 도시의 30년 평균 기후가 그래프 한 장에"]
         ];
-        Anim.player(el.querySelector(".build-ctl"), { steps: ["가로축", "강수 막대", "기온 점", "기온 선", "완성"], interval: 2200, start: 4,
+        Anim.player(el.querySelector(".build-ctl"), { steps: ["시작", "가로축 · 눈금", "강수 막대", "기온 점", "기온 선", "완성"], interval: 2200, start: 0,
           onStep: function (k) {
-            host.setAttribute("data-st", k);
+            host.classList.toggle("empty", k === 0);
+            host.setAttribute("data-st", Math.max(0, k - 1));
             say.innerHTML = '<div class="bs-t">' + SAY[k][0] + '</div>' + pts([SAY[k][1]], "lg");
           } });
       }
@@ -280,12 +282,13 @@ const JudgeBoard = (function () {
       }
     },
     {
-      title: "정리", kind: "summary", terms: ["최난월","최한월","기온의 연교차","연강수량","최다우월 · 최소우월"],
-      html: pts([
-        "기후 그래프: <b>선</b> = 월평균 기온(왼쪽 ℃), <b>막대</b> = 월 강수량(오른쪽 mm)",
-        "읽을 요소: 최난월 · 최한월 · 기온의 연교차 · 연강수량 · 최다우월 · 최소우월",
-        "남반구: 계절 반대 — 1월 여름, 7월 겨울"
-      ], "lg")
+      title: "정리", kind: "summary",
+      html: sumCards([
+        { emo: "📈", t: "기후 그래프", c: "#e2632b", float: true, d: ["<b>선</b> = 월평균 기온 (왼쪽 ℃)", "<b>막대</b> = 월 강수량 (오른쪽 mm)", "가로축 = 1월 ~ 12월"] },
+        { emo: "🌡️", t: "기온 읽기", c: "#e0483a", float: true, d: ["<b>최난월</b> · <b>최한월</b>", "기온의 연교차 = 최난월 − 최한월", "연평균 기온"] },
+        { emo: "🌧️", t: "강수 읽기", c: "#2b6fe3", float: true, d: ["<b>연강수량</b> = 12달의 합", "최다우월 · 최소우월(최건월)", "강수가 집중되는 계절"] },
+        { emo: "🌏", t: "남반구", c: "#2f9e5b", float: true, d: ["계절이 반대 — 1월 여름, 7월 겨울", "월 이름보다 <b>그래프 모양</b>으로 판단"] }
+      ])
     }
   ] };
 
@@ -357,6 +360,142 @@ const JudgeBoard = (function () {
     ["H", [["H", "고산"]]]
   ];
 
+
+  /* ---------- 쾨펜 기후 구분이 만들어지기까지 (이야기 애니메이션) ---------- */
+  const STORY = [
+    { y: "1846", emo: "👶", t: "러시아에서 태어난 과학자", d: ["블라디미르 쾨펜 — 상트페테르부르크 출생, 독일에서 활동", "대학에서 식물학 공부 → 식물과 기후의 관계에 관심"],
+      art: '<div class="st-art person"><span>🧑‍🔬</span><span>🌿</span><span>🌡️</span></div>' },
+    { y: "1874", emo: "🌿", t: "식물학자가 나눈 5가지 식물 무리", d: ["스위스 식물학자 드캉돌: 식물을 필요한 열·물에 따라 5무리로 구분", "쾨펜: 식물 분포 = 기후를 보여 주는 지표"],
+      art: '<div class="st-art plants">' + [["🌴", "더위 좋아함"], ["🌵", "건조 견딤"], ["🌳", "온화한 곳"], ["🌲", "추위 견딤"], ["🌱", "아주 추운 곳"]].map(function (x) { return '<span><b>' + x[0] + '</b><small>' + x[1] + '</small></span>'; }).join("") + '</div>' },
+    { y: "1884", emo: "🗺️", t: "세계 기온대 지도", d: ["일 년 중 더운 달 · 추운 달 수로 세계를 기온대로 나눈 지도 발표", "기후를 숫자(기온)로 나누는 첫걸음"],
+      art: '<div class="st-art bands">' + ["#8e5cc8", "#2f6fdb", "#6cb52d", "#e03131", "#6cb52d", "#2f6fdb", "#8e5cc8"].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + '</div>' },
+    { y: "1900", emo: "📘", t: "식생으로 나눈 기후 구분", d: ["식물 무리의 분포를 기준으로 세계 기후를 처음 체계적으로 구분", "기후대마다 알파벳 기호를 붙이기 시작"],
+      art: '<div class="st-art match">' + [["🌴", "A"], ["🌵", "B"], ["🌳", "C"], ["🌲", "D"], ["🌱", "E"]].map(function (x) { return '<span><b>' + x[0] + '</b><i>→</i><em style="--zc:' + ZONES[x[1]].color + '">' + x[1] + '</em></span>'; }).join("") + '</div>' },
+    { y: "1918", emo: "🔢", t: "기온 · 강수 수치 기준으로 개정", d: ["식물 대신 <b>월평균 기온 · 월 강수량</b>의 경계값으로 판별", "기후 그래프만 있으면 누구나 같은 결과 → 오늘날의 기준"],
+      art: '<div class="st-art nums">' + ["최난월 10℃", "연강수량", "최한월 18℃", "최한월 −3℃"].map(function (x) { return '<span>' + x + '</span>'; }).join("") + '</div>' },
+    { y: "1936~1961", emo: "🤝", t: "쾨펜-가이거 기후 구분", d: ["1936 쾨펜의 마지막 개정 → 1940 세상을 떠남", "제자 가이거가 지도와 기준을 다듬음 → 「쾨펜-가이거 기후 구분」"],
+      art: '<div class="st-art person"><span>🧓</span><span>🤝</span><span>🧑‍🏫</span></div>' },
+    { y: "오늘", emo: "🛰️", t: "지금도 쓰이는 기후 구분", d: ["관측·위성 자료로 전 세계를 격자로 판별한 지도 — 1-2 세계 기후 지도", "교과서 · 기후 연구에서 가장 널리 쓰이는 기후 구분"],
+      art: '<div class="st-art sat"><span>🛰️</span><span>🌍</span></div>' }
+  ];
+  function storyBlock() {
+    return {
+      title: "쾨펜의 기후 구분이 만들어지기까지",
+      html: '<div class="story">' +
+          '<div class="st-line">' + STORY.map(function (s, i) { return '<button type="button" class="st-dot" data-i="' + i + '"><i></i><span>' + s.y + '</span></button>'; }).join("") + '</div>' +
+          '<div class="st-stage"></div>' +
+        '</div><div class="st-ctl"></div>',
+      init: function (el) {
+        const stage = el.querySelector(".st-stage");
+        function show(k) {
+          const s = STORY[k];
+          el.querySelectorAll(".st-dot").forEach(function (b, i) { b.classList.toggle("on", i === k); b.classList.toggle("done", i < k); });
+          el.querySelector(".st-line").style.setProperty("--p", (k / (STORY.length - 1) * 100).toFixed(1) + "%");
+          stage.innerHTML = '<div class="st-card"><div class="st-y">' + s.y + '</div><div class="st-body"><h4><span aria-hidden="true">' + s.emo + '</span>' + s.t + '</h4>' +
+            pts(s.d, "lg") + '</div>' + s.art + '</div>';
+        }
+        const pl = Anim.player(el.querySelector(".st-ctl"), { steps: STORY.map(function (s) { return s.y; }), interval: 3600, onStep: show });
+        el.querySelector(".st-line").addEventListener("click", function (e) { const b = e.target.closest(".st-dot"); if (b) { pl.pause(); pl.go(+b.dataset.i); } });
+      }
+    };
+  }
+
+  /* ---------- 쾨펜 기후 분류 체계 (나무 도식) ---------- */
+  const TREE_WHY = {
+    A: "최한월 18℃ 이상", B: "연강수량 500mm 미만", C: "최한월 −3℃ 초과 18℃ 미만", D: "최한월 −3℃ 이하 · 최난월 10℃ 이상", E: "최난월 10℃ 미만",
+    Af: "최소우월 60mm 이상 — 건기 없음", Am: "짧은 건기 — 계절풍", Aw: "건기 뚜렷(겨울)", BW: "연강수량 250mm 미만", BS: "연강수량 250~500mm",
+    Cfa: "연중 습윤 · 최난월 22℃ 이상", Cfb: "연중 습윤 · 최난월 22℃ 미만", Cs: "여름 건조", Cw: "겨울 건조", Df: "연중 습윤", Dw: "겨울 건조",
+    ET: "최난월 0~10℃", EF: "최난월 0℃ 미만"
+  };
+  function treeSvg() {
+    const W = 1200, H = 520, zs = ["A", "C", "D", "B", "E"];
+    const types = { A: ["Af", "Am", "Aw"], C: ["Cfa", "Cfb", "Cs", "Cw"], D: ["Df", "Dw"], B: ["BW", "BS"], E: ["ET", "EF"] };
+    let leaves = [], x = 130;
+    zs.forEach(function (z, i) { if (i === 3) x += 40; types[z].forEach(function (t) { leaves.push({ t: t, z: z, x: x }); x += 78; }); });
+    const zx = {}; zs.forEach(function (z) { const l = leaves.filter(function (q) { return q.z === z; }); zx[z] = (l[0].x + l[l.length - 1].x) / 2; });
+    const gx = [(zx.A + zx.D) / 2, (zx.B + zx.E) / 2], rx = (gx[0] + gx[1]) / 2;
+    const Y = [50, 150, 270, 420];
+    const ln = function (x1, y1, x2, y2, cls) { const m = (y1 + y2) / 2; return '<path class="kt-l ' + cls + '" d="M' + x1 + ' ' + (y1 + 22) + ' C' + x1 + ' ' + m + ' ' + x2 + ' ' + m + ' ' + x2 + ' ' + (y2 - 22) + '"/>'; };
+    let s = '<svg class="p2-svg kt-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="쾨펜 기후 분류 체계">';
+    s += ln(rx, Y[0], gx[0], Y[1], "g0") + ln(rx, Y[0], gx[1], Y[1], "g1");
+    zs.forEach(function (z) { s += ln(z === "B" || z === "E" ? gx[1] : gx[0], Y[1], zx[z], Y[2], "z" + z); });
+    leaves.forEach(function (q) { s += ln(zx[q.z], Y[2], q.x, Y[3], "t" + q.t + " z" + q.z); });
+    s += '<g class="kt-n root"><rect x="' + (rx - 90) + '" y="' + (Y[0] - 24) + '" width="180" height="48" rx="14"/><text x="' + rx + '" y="' + (Y[0] + 7) + '" text-anchor="middle">기후</text></g>';
+    [["수목 기후", "🌳 나무가 자람", 0], ["무수목 기후", "🌵❄️ 나무가 자라기 어려움", 1]].forEach(function (g) {
+      s += '<g class="kt-n grp g' + g[2] + '" data-g="' + g[2] + '"><rect x="' + (gx[g[2]] - 130) + '" y="' + (Y[1] - 26) + '" width="260" height="52" rx="14"/><text x="' + gx[g[2]] + '" y="' + (Y[1] - 2) + '" text-anchor="middle">' + g[0] + '</text><text class="kt-s" x="' + gx[g[2]] + '" y="' + (Y[1] + 17) + '" text-anchor="middle">' + g[1] + '</text></g>';
+    });
+    zs.forEach(function (z) {
+      s += '<g class="kt-n zone" data-k="' + z + '" style="--zc:' + ZONES[z].color + '"><rect x="' + (zx[z] - 72) + '" y="' + (Y[2] - 30) + '" width="144" height="60" rx="14"/><text class="kt-z" x="' + zx[z] + '" y="' + (Y[2] + 2) + '" text-anchor="middle">' + z + ' ' + ZONES[z].name + '</text><text class="kt-s" x="' + zx[z] + '" y="' + (Y[2] + 21) + '" text-anchor="middle">1차</text></g>';
+    });
+    leaves.forEach(function (q) {
+      s += '<g class="kt-n leaf" data-k="' + q.t + '" style="--zc:' + ZONES[q.z].color + '"><rect x="' + (q.x - 38) + '" y="' + (Y[3] - 30) + '" width="76" height="60" rx="12"/><text class="kt-c" x="' + q.x + '" y="' + (Y[3] + 2) + '" text-anchor="middle">' + q.t + '</text><text class="kt-s" x="' + q.x + '" y="' + (Y[3] + 20) + '" text-anchor="middle">' + (Koppen.NAMES[q.t] || "").replace(/ 기후$/, "").replace("온대 겨울 건조", "온대 겨울건조").replace("냉대 겨울 건조", "냉대 겨울건조").slice(0, 6) + '</text></g>';
+    });
+    s += '<text class="kt-lv" x="14" y="' + (Y[2] + 5) + '">1차</text><text class="kt-lv" x="14" y="' + (Y[3] + 5) + '">2·3차</text>';
+    return s + '</svg>';
+  }
+  function treeBlock() {
+    return {
+      title: "쾨펜 기후 분류 체계",
+      html: '<div class="kt-wrap">' + treeSvg() + '</div><div class="p2-readout kt-t">기후대나 기후 기호를 누르면 → 가지가 강조되고 판별 기준이 나타남</div>' +
+        '<p class="keyline sm">나무가 자랄 수 있는가(수목 · 무수목) → 기후대 5개(1차) → 강수의 계절 · 세분(2차) · 여름 기온(3차) = 13개 기후형 · 고산 기후(H)는 따로 구분</p>',
+      init: function (el) {
+        const svg = el.querySelector(".kt-svg");
+        svg.addEventListener("click", function (e) {
+          const n = e.target.closest(".kt-n.zone, .kt-n.leaf");
+          if (!n) return;
+          const k = n.getAttribute("data-k"), z = k.charAt(0), g = (z === "B" || z === "E") ? 1 : 0;
+          svg.classList.add("focus");
+          svg.querySelectorAll(".kt-n, .kt-l").forEach(function (x) { x.classList.remove("hot"); });
+          svg.querySelector(".kt-n.root").classList.add("hot");
+          svg.querySelector('.kt-n.grp[data-g="' + g + '"]').classList.add("hot");
+          svg.querySelector(".kt-l.g" + g).classList.add("hot");
+          svg.querySelector('.kt-n.zone[data-k="' + z + '"]').classList.add("hot");
+          svg.querySelectorAll(".kt-l").forEach(function (x) {
+            const c = x.getAttribute("class");
+            if (c.indexOf("z" + z) >= 0 && c.indexOf(" t") < 0) x.classList.add("hot");            // 무리 → 기후대
+            if (k.length === 1 && c.indexOf("z" + z) >= 0) x.classList.add("hot");                    // 기후대 → 모든 기후형
+            if (k.length > 1 && c.indexOf("t" + k + " ") >= 0) x.classList.add("hot");               // 기후대 → 그 기후형
+          });
+          svg.querySelectorAll('.kt-n.leaf[data-k^="' + z + '"]').forEach(function (x) { if (k.length === 1 || x.getAttribute("data-k") === k) x.classList.add("hot"); });
+          const zN = ZONES[z].name;
+          el.querySelector(".kt-t").innerHTML = k.length === 1
+            ? "<b>" + z + " " + zN + " 기후</b> — 1차 기준: " + TREE_WHY[z] + " → 기후형 " + svg.querySelectorAll('.kt-n.leaf[data-k^="' + z + '"]').length + "개"
+            : "<b>" + k + " " + Koppen.NAMES[k] + "</b> — 1차: " + TREE_WHY[z] + " · 2·3차: " + TREE_WHY[k] + " (예: " + escHtml(C(TYPE_CITY[k]).kr) + ")";
+        });
+      }
+    };
+  }
+
+  /* ---------- 1차 · 2차 · 3차 구분 한눈에 ---------- */
+  const OVER = [
+    { z: "A", c1: "최한월 18℃ 이상", c2: [["f", "최소우월 60mm 이상"], ["m", "짧은 건기(계절풍)"], ["w", "겨울 건기 뚜렷"]], c3: "—" },
+    { z: "B", c1: "연강수량 500mm 미만", c2: [["W", "250mm 미만 · 사막"], ["S", "250~500mm · 스텝"]], c3: "—" },
+    { z: "C", c1: "최한월 −3℃ 초과 18℃ 미만", c2: [["f", "연중 습윤"], ["s", "여름 건조"], ["w", "겨울 건조"]], c3: "<span class=\"ov-c3\">Cf만 세분<br><b>a</b> 최난월 22℃ 이상<br><b>b</b> 최난월 22℃ 미만</span>" },
+    { z: "D", c1: "최한월 −3℃ 이하", c2: [["f", "연중 습윤"], ["w", "겨울 건조"]], c3: "—" },
+    { z: "E", c1: "최난월 10℃ 미만", c2: [["T", "최난월 0~10℃ · 툰드라"], ["F", "최난월 0℃ 미만 · 빙설"]], c3: "—" }
+  ];
+  const ORDER = ["E", "B", "A", "C", "D"];
+  function overBlock() {
+    return {
+      title: "1차 · 2차 · 3차 구분 한눈에",
+      html: '<div class="ov-ctl"></div><div class="ov" data-st="3">' +
+          '<div class="ov-h"><span></span><span class="c1">1차 — 기후대</span><span class="c2">2차 — 강수의 계절 · 세분</span><span class="c3">3차 — 여름 기온</span></div>' +
+          ORDER.map(function (z, i) {
+            const o = OVER.filter(function (x) { return x.z === z; })[0];
+            return '<div class="ov-r" style="--zc:' + ZONES[z].color + '"><span class="ov-z"><em>' + (i + 1) + '</em><b>' + z + '</b>' + ZONES[z].name + '</span>' +
+              '<span class="c1">' + o.c1 + '</span>' +
+              '<span class="c2">' + o.c2.map(function (x) { return '<i><b>' + x[0] + '</b>' + x[1] + '</i>'; }).join("") + '</span>' +
+              '<span class="c3">' + o.c3 + '</span></div>';
+          }).join("") +
+        '</div>' +
+        '<p class="keyline sm">1차는 위에서부터 차례로(E → B → A → C/D) 확인 · 교과서 기준 · 여름 반년: 북반구 4~9월, 남반구 10~3월</p>',
+      init: function (el) {
+        const ov = el.querySelector(".ov");
+        Anim.player(el.querySelector(".ov-ctl"), { steps: ["1차 구분", "2차 구분", "3차 구분", "모두 보기"], interval: 2400, start: 3, onStep: function (k) { ov.setAttribute("data-st", k); } });
+      }
+    };
+  }
+
   CHAPTER_CONTENT["4-2"] = { blocks: [
     {
       title: "쾨펜의 기후 구분",
@@ -366,8 +505,10 @@ const JudgeBoard = (function () {
           '<div class="tr-box notree"><div class="tr-emo" aria-hidden="true">🌵❄️</div><h4>무수목 기후</h4><p>나무가 자라기 어려운 기후</p>' +
             '<div class="tr-z">' + [["B", "강수 부족"], ["E", "기온 부족"]].map(function (k) { return '<span style="--zc:' + ZONES[k[0]].color + '"><b>' + k[0] + '</b>' + ZONES[k[0]].name + ' <small>' + k[1] + '</small></span>'; }).join("") + '</div></div>' +
         '</div>' +
-        pts(["<b>쾨펜</b>(독일의 기후학자): <b>식생 분포</b>를 기준으로 기후 구분", "기준 = 월평균 기온 · 월 강수량 → 기후 그래프만으로 판별 가능"], "inline")
+        pts(["<b>쾨펜</b>(1846~1940, 러시아 태생 독일 기후학자): <b>식생 분포</b>를 기준으로 기후 구분", "기준 = 월평균 기온 · 월 강수량 → 기후 그래프만으로 판별 가능"], "inline")
     },
+    storyBlock(),
+    treeBlock(),
     {
       title: "1차 구분 — 기후대",
       html: '<div class="flow-wrap">' + flowHtml() +
@@ -461,6 +602,7 @@ const JudgeBoard = (function () {
         '</div>' +
         pts(["Cf 기후를 여름 기온으로 세분", "최난월 <b>22℃ 이상 → a</b>(여름 더움) · <b>22℃ 미만 → b</b>(여름 서늘)"], "inline")
     },
+    overBlock(),
     {
       title: "기후 기호 읽기",
       html: '<div class="code-read">' + codeRead("Cfa") + '</div>' +
@@ -486,6 +628,7 @@ const JudgeBoard = (function () {
       html: '<div class="ref2">' +
           '<div class="ref"><h4>온대 · 냉대 경계</h4>' + pts(["이 교과서: 최한월 <b>−3℃</b> (쾨펜의 원래 기준)", "0℃를 경계로 쓰는 자료·지도도 있음", "서울(최한월 −2.4℃): −3℃ 기준 → 온대(Cw) / 0℃ 기준 → 냉대(Dw)"]) + '</div>' +
           '<div class="ref"><h4>건조 기후 경계</h4>' + pts(["이 교과서: 연강수량 <b>500mm 미만</b> (사막 250mm 미만) — 단순화 기준", "정밀 기준: 건조 한계가 기온·강수 계절에 따라 달라짐", "1-2 세계 기후 지도는 정밀 기준 적용 → 일부 경계 지역은 판별 결과와 다를 수 있음"]) + '</div>' +
+          '<div class="ref"><h4>3차 구분</h4>' + pts(["이 교과서: <b>Cf만</b> a · b로 세분", "원래 쾨펜 구분: Cs · Cw · D에도 a · b · c · d, 건조 기후에 h · k", "b는 원래 「10℃ 이상인 달 4개 이상」 조건도 있음 — 교과서에서는 생략"]) + '</div>' +
         '</div>'
     },
     {
@@ -518,12 +661,13 @@ const JudgeBoard = (function () {
       }
     },
     {
-      title: "정리", kind: "summary", terms: ["수목 기후","무수목 기후","1차 · 2차 · 3차 구분","f · w · s · m","a · b"],
-      html: pts([
-        "쾨펜: 식생 분포 기준 → 기온·강수로 기후 구분",
-        "1차 순서: 최난월 10℃ 미만 <b>E</b> → 연강수량 500mm 미만 <b>B</b> → 최한월 18℃ 이상 <b>A</b> → −3℃ 초과 <b>C</b> / 이하 <b>D</b>",
-        "기호 = 기후대(1차) + 강수의 계절·세분(2차) + 여름 기온(3차, Cf)"
-      ], "lg")
+      title: "정리", kind: "summary",
+      html: sumCards([
+        { emo: "🌳", t: "쾨펜의 기후 구분", c: "#2f9e5b", float: true, d: ["<b>식생 분포</b>를 기준으로 구분", "수목 기후(A · C · D) · 무수목 기후(B · E)"] },
+        { emo: "1️⃣", t: "1차 — 기후대", c: "#e0483a", float: true, d: ["<b>E</b> 최난월 10℃ 미만 → <b>B</b> 연강수량 500mm 미만", "→ <b>A</b> 최한월 18℃ 이상 → <b>C</b> −3℃ 초과 / <b>D</b>"] },
+        { emo: "2️⃣", t: "2차 — 강수 · 세분", c: "#2b6fe3", float: true, d: ["<b>f</b> 연중 습윤 · <b>s</b> 여름 건조 · <b>w</b> 겨울 건조 · <b>m</b>", "<b>W · S</b> 건조 · <b>T · F</b> 한대"] },
+        { emo: "3️⃣", t: "3차 — 여름 기온", c: "#e6a700", float: true, d: ["Cf만 세분", "<b>a</b> 최난월 22℃ 이상 · <b>b</b> 22℃ 미만"] }
+      ])
     }
   ] };
 
@@ -543,15 +687,6 @@ const JudgeBoard = (function () {
         '</div>',
       init: function (el) { bindToggles(el.querySelector(".graph-main"), false); JudgeBoard.init(el); }
     };
-  });
-  blocks43.push({
-    title: "정리", kind: "summary", terms: ["판별 순서","기준선 18 · 10 · −3 · 22℃","연강수량 500 · 250mm"],
-    html: '<div class="res-table">' + PRACTICE.map(function (id, i) {
-      const c = C(id), j = Koppen.judge(c);
-      return '<div class="rt" style="--zc:' + ZONES[j.zone].color + '"><span class="rt-n">' + NUMS[i] + '</span><span class="rt-city">' + escHtml(c.kr) + '</span>' +
-        '<span class="rt-code">' + j.code + '</span><span class="rt-name">' + j.name + '</span></div>';
-    }).join("") + '</div>' +
-    pts(["판별 순서: E → B → A → C/D (1차) → 강수의 계절·세분 (2차) → 여름 기온 (3차, Cf)"], "sm")
   });
   CHAPTER_CONTENT["4-3"] = { blocks: blocks43 };
 })();

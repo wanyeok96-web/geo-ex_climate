@@ -739,3 +739,133 @@ line.tick.main { stroke: var(--ink-2); stroke-width: 3; }
 .nd-hub .g2 .nd-card:not(.nd-card--link), .g2 .nd-card { justify-content: flex-start; min-height: 16.5em; }
 .p2-ctl .anim-bar { flex: 1 1 auto; min-width: 0; max-width: 100%; }
 .p2-ctl .anim-steps { min-width: 0; }
+
+/* ============================================================
+   2차 시뮬레이터 (2026-09-30) — 연교차 산점도 · 우량계 · 기압과 바람 · 위도대 탐색 · 계절풍 달별 재생
+   ============================================================ */
+.tr-two { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+.tr-two > .p2-figwrap, .tr-two > .p2-mapbox { min-height: 0; }
+.tr-pick { display: inline-flex; align-items: center; gap: 6px; font-size: .82em; font-weight: 800; color: var(--muted); }
+.tr-pick select { font: inherit; font-weight: 800; color: var(--ink); padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); }
+.tr-read .p2-row { margin: 0; }
+.tr-dot, .lt-dot { stroke: #fff; stroke-width: 1.5; opacity: .85; cursor: pointer; transition: opacity .25s, r .25s; }
+.tr-dot:hover, .lt-dot:hover { opacity: 1; stroke: #1c2433; }
+.tr-dot.on { opacity: 1; stroke: #1c2433; stroke-width: 3; }
+.tr-sel circle { fill: none; stroke: #1c2433; stroke-width: 3; }
+.tr-sel text { font-size: 15px; font-weight: 900; fill: #1c2433; paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+.tr-sel { transition: transform .45s ease-out; }
+.tr-fit { stroke: #394155; stroke-width: 2.5; stroke-dasharray: 8 6; opacity: .6; }
+.lt-dot.dim { opacity: .14; }
+.lt-band { fill: rgba(217, 138, 28, .16); transition: x .3s, width .3s; }
+.lt-mband { fill: rgba(217, 138, 28, .38); stroke: #d98a1c; stroke-width: .4; }
+.lt-mt { font-weight: 900; fill: #8a5410; paint-order: stroke; stroke: #fff; stroke-width: .8; }
+.lt-map { min-height: 220px; }
+
+/* 우량계 */
+.pm-drop { stroke: #2b6fe3; stroke-width: 2.5; stroke-linecap: round; }
+.pm-flake { fill: #fff; stroke: #b9c7d8; stroke-width: 1; }
+.pm-fall { transition: opacity .3s; }
+.pm-snowbed { fill: #fff; stroke: #c9d4e2; stroke-width: 1.5; }
+.pm-clock { font-size: 26px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+.pm-svg .water { transition: none; }
+
+/* 기압과 바람 */
+.wp-sliders { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.wp-box { fill: #f2f5fa; stroke: #b9c3d1; stroke-width: 2; transition: fill .3s, stroke .3s; }
+.wp-col.high .wp-box { fill: #fde8e4; stroke: #e0483a; }
+.wp-col.low .wp-box { fill: #e5efff; stroke: #2b6fe3; }
+.wp-dots circle { fill: #8a93a6; transition: opacity .3s; }
+.wp-col.high .wp-hl { fill: #e0483a; } .wp-col.low .wp-hl { fill: #2b6fe3; }
+.wp-parts circle { fill: #fff; stroke: #2f9e8f; stroke-width: 2.5; }
+.wp-arrow .p2-arrow.wind line { animation-duration: .9s; }
+@media (max-width: 700px) { .wp-sliders { grid-template-columns: 1fr; } }
+
+@media (max-width: 1100px) { .tr-two { grid-template-columns: 1fr; } .tr-two > .p2-figwrap { min-height: 260px; } }
+.wp-hp, .wp-hl { paint-order: stroke; stroke: #fff; stroke-width: 6px; }
+.me-play .anim-step i { display: none; }
+.me-play .anim-step { padding: 5px 10px; }
+
+/* ============================================================
+   3차 시뮬레이터 (2026-09-30) — 그림 크게 · 강수 계절 · 산곡풍 · 서→동 여행 · 서안/동안 · 에너지 수지
+   ============================================================ */
+/* 그림 크게 */
+.nd-topline { flex: none; display: flex; align-items: center; gap: 10px; }
+.nd-topline .nd-topics { flex: 1; min-width: 0; }
+.nd-zoom { flex: none; padding: 8px 16px; border-radius: 999px; cursor: pointer; font-size: .82em; font-weight: 800; color: var(--ink-2); background: var(--panel); border: 1.5px solid var(--line); }
+.nd-zoom:hover { border-color: var(--nc); color: var(--nc); }
+.nd.wide .nd-zoom { color: #fff; background: var(--nc); border-color: var(--nc); }
+.nd.wide .nd-stage { grid-template-columns: minmax(0, 1fr); }
+.nd.wide .nd-text { display: none; }
+@media (max-width: 1100px) { .nd-zoom { display: none; } }
+
+/* 강수 계절 */
+.ps-two { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+.ps-side { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.ps-rw { width: min(100%, 300px); }
+.ps-ring path { stroke: #fff; stroke-width: 2; }
+.ps-rt { font-size: 15px; font-weight: 900; fill: #fff; }
+.ps-rc { font-size: 30px; font-weight: 900; fill: var(--ink); }
+.ps-rs { font-size: 13px; font-weight: 800; fill: var(--muted); }
+.ps-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; font-size: .84em; font-weight: 800; }
+.ps-keys span { display: inline-flex; align-items: center; gap: 5px; }
+.ps-keys i { width: 14px; height: 14px; border-radius: 4px; background: var(--sc); }
+.ps-note { font-size: .84em; font-weight: 700; color: var(--muted); text-align: center; }
+.ps-bar { transform-box: fill-box; transform-origin: 50% 100%; animation: ps-grow .6s ease-out both; animation-delay: calc(var(--i) * 40ms); }
+@keyframes ps-grow { from { transform: scaleY(0); } }
+
+/* 산곡풍 */
+.vb-flow { fill: none; stroke: transparent; }
+.vb-svg .fp circle { fill: #fff; stroke: #2f9e8f; stroke-width: 2; }
+
+/* 서쪽 → 동쪽 여행 */
+.trip-route { fill: none; stroke: #394155; stroke-dasharray: 2 1.4; opacity: .7; }
+.trip-pt { fill: #fff; stroke: #394155; stroke-width: .4; }
+.trip-pt.done { fill: #9aa6b8; }
+.trip-pt.now { fill: #e0483a; stroke: #fff; stroke-width: .6; }
+.trip-t { font-weight: 900; fill: #1c2433; paint-order: stroke; stroke: #fff; }
+.trip-l { fill: none; stroke: #b9c3d1; stroke-width: 2.5; }
+.trip-l.now { stroke: var(--tc); stroke-width: 5; }
+.trip-b { transition: opacity .4s; }
+.trip-b.off { opacity: .12; }
+.trip-b.now rect { stroke: #1c2433; stroke-width: 2.5; }
+.trip-bv { font-size: 14px; font-weight: 900; fill: var(--ink); }
+.trip-bn { font-size: 13px; font-weight: 800; fill: var(--ink-2); }
+
+/* 서안 · 동안 */
+.we-ar .ga-l { fill: none; stroke: #2b6fe3; stroke-linecap: round; } .we-ar .ga-h { fill: #2b6fe3; }
+.we-ar.land .ga-l { stroke: #8a5a2b; } .we-ar.land .ga-h { fill: #8a5a2b; }
+.we-ar .fp circle { fill: #fff; }
+.we-pt.w { fill: #e0483a; stroke: #fff; stroke-width: .5; } .we-pt.e { fill: #7a5cc8; stroke: #fff; stroke-width: .5; }
+.we-t { font-weight: 900; fill: #1f5fd0; paint-order: stroke; stroke: #fff; }
+.we-t2 { font-weight: 900; fill: #1c2433; paint-order: stroke; stroke: #fff; }
+
+/* 에너지 수지 읽기 */
+.bud-line { stroke: #394155; stroke-width: 2; stroke-dasharray: 5 5; }
+.bud-in { fill: #f2b705; stroke: #fff; stroke-width: 2.5; }
+.bud-out { fill: #7a5cc8; stroke: #fff; stroke-width: 2.5; }
+.bud-gap { stroke-width: 8; stroke-linecap: round; opacity: .55; }
+.bud-gap.sur { stroke: #e0483a; } .bud-gap.def { stroke: #2b6fe3; }
+.tr-two.rows { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1.05fr); }
+.tr-two.rows > .p2-mapbox { min-height: 0; }
+
+/* ============================================================
+   해류 「바다 위의 공기」 · 계절풍 「계절풍 만들기」 (2026-09-30)
+   ============================================================ */
+.ca2-sky { fill: #e8f2fc; stroke: var(--line); }
+.ca2.w .ca2-sky { fill: #dfe9f5; }
+.ca2-sea.w { fill: #3f86d6; } .ca2-sea.c { fill: #1f4f8f; }
+.ca2-desert { fill: #e3c58a; }
+.ca2-waves path { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 2; }
+.ca2-t { font-size: 15px; font-weight: 900; fill: #fff; }
+.ca2-fog { fill: rgba(236, 240, 245, .85); }
+.ca2-fogt { fill: var(--ink-2); }
+.ca2-parts circle { stroke: rgba(255, 255, 255, .8); stroke-width: 1.5; }
+.mm-land { fill: #c9a86a; transition: fill .4s; }
+.mm-col rect { stroke: rgba(0, 0, 0, .12); stroke-width: 2; opacity: .8; transition: fill .4s; }
+.mm-col .p2-hl { font-size: 64px; font-weight: 900; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .3); stroke-width: 5px; }
+.mm-col.low .p2-hl { fill: #ffe0d6; } .mm-col.high .p2-hl { fill: #dceaff; }
+.mm-col .mm-tt { fill: #fff; font-weight: 800; paint-order: stroke; stroke: rgba(0, 0, 0, .3); stroke-width: 3px; }
+.mm-parts circle { stroke: #fff; stroke-width: 1.5; }
+.mm-rain { transition: opacity .5s; }
+.mm-wt { font-weight: 900; }
+.ca2-h { font-weight: 900; }

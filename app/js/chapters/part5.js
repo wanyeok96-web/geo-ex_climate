@@ -43,7 +43,7 @@
       veg: [
         { ph: "rainforest", emo: "🌳", t: "열대 우림", d: ["키 큰 상록 활엽수가 여러 층으로 빽빽함", "아마존의 셀바스, 동남아시아의 정글"] },
         { ph: "savanna", emo: "🦒", t: "사바나 초원", d: ["키 큰 풀 사이에 나무가 드문드문", "건기에 풀이 마름 · 야생 동물 서식"] },
-        { emo: "🧱", t: "토양", d: ["많은 비에 영양분이 씻겨 척박한 붉은 흙", "라테라이트(적색토)"] }
+        { art: "laterite", emo: "🧱", t: "토양", d: ["많은 비에 영양분이 씻겨 척박한 붉은 흙", "라테라이트(적색토)"] }
       ],
       life: [
         { k: "가옥", d: "고상 가옥(바닥을 띄움 — 습기·해충 차단), 경사 급한 지붕" },
@@ -78,7 +78,7 @@
       veg: [
         { ph: "sahara", emo: "🌵", t: "사막", d: ["식생이 거의 없음 · 모래·자갈 사막", "물이 솟는 오아시스 주변에만 대추야자"] },
         { ph: "steppe", emo: "🌾", t: "스텝", d: ["비가 조금 오는 시기에 자라는 짧은 풀 초원", "나무는 거의 자라지 못함"] },
-        { emo: "🌡️", t: "기후 특징", d: ["구름이 적어 일교차가 매우 큼", "바람에 모래 먼지"] }
+        { art: "dryday", emo: "🌡️", t: "기후 특징", d: ["구름이 적어 일교차가 매우 큼", "바람에 모래 먼지"] }
       ],
       life: [
         { k: "가옥", d: "흙벽돌집 — 두꺼운 벽 · 작은 창 · 평평한 지붕 / 스텝의 이동식 가옥(몽골 게르)" },
@@ -115,7 +115,7 @@
       veg: [
         { ph: "deciduous", emo: "🍂", t: "낙엽 활엽수림 · 혼합림", d: ["사계절 변화 뚜렷 — 가을 단풍", "서안 해양성 · 온난 습윤 지역"] },
         { ph: "olive", emo: "🫒", t: "경엽수림", d: ["여름 가뭄에 견디는 작고 단단한 잎", "올리브 · 코르크참나무 (지중해성)"] },
-        { emo: "🌿", t: "상록 활엽수림", d: ["겨울이 따뜻한 저위도 쪽", "동백나무 · 녹나무 (조엽수림)"] }
+        { art: "evergreen", emo: "🌿", t: "상록 활엽수림", d: ["겨울이 따뜻한 저위도 쪽", "동백나무 · 녹나무 (조엽수림)"] }
       ],
       life: [
         { k: "가옥", d: "지중해: 흰 벽 · 작은 창(강한 여름 햇볕) / 동아시아: 여름 대비 대청마루, 겨울 대비 온돌" },
@@ -150,8 +150,8 @@
       ],
       veg: [
         { ph: "taiga", emo: "🌲", t: "타이가", d: ["전나무 · 가문비나무 · 소나무 등 침엽수림", "세계적인 목재 · 펄프 생산 지역"] },
-        { emo: "🪨", t: "토양", d: ["산성의 회백색 토양", "포드졸"] },
-        { emo: "🧊", t: "기후 특징", d: ["겨울이 길고 매우 추움 · 여름은 짧지만 따뜻함", "연교차 매우 큼 (하얼빈 약 " + r0(maxOf(C("Harbin").t) - minOf(C("Harbin").t)) + "℃)"] }
+        { art: "podzol", emo: "🪨", t: "토양", d: ["산성의 회백색 토양", "포드졸"] },
+        { art: "harbin", emo: "🧊", t: "기후 특징", d: ["겨울이 길고 매우 추움 · 여름은 짧지만 따뜻함", "연교차 매우 큼 (하얼빈 약 " + r0(maxOf(C("Harbin").t) - minOf(C("Harbin").t)) + "℃)"] }
       ],
       life: [
         { k: "가옥", d: "통나무집 · 두꺼운 벽과 이중창 · 난방 시설" },
@@ -185,7 +185,7 @@
       ],
       veg: [
         { ph: "tundra", emo: "🌱", t: "툰드라", d: ["짧은 여름에 이끼 · 지의류 · 키 작은 풀", "나무가 자라지 못함"] },
-        { emo: "🧊", t: "영구 동토층", d: ["땅속이 일 년 내내 얼어 있음", "여름에는 표면만 녹아 습지가 됨"] },
+        { art: "permafrost", emo: "🧊", t: "영구 동토층", d: ["땅속이 일 년 내내 얼어 있음", "여름에는 표면만 녹아 습지가 됨"] },
         { ph: "ice-sheet", emo: "🏔️", t: "빙설", d: ["두꺼운 빙하(대륙 빙하)", "식생 없음"] }
       ],
       life: [
@@ -221,7 +221,7 @@
       veg: [
         { ph: "andes", emo: "🏞️", t: "고도에 따른 식생 변화", d: ["산 아래 열대 우림 → 올라갈수록 활엽수림 · 침엽수림 · 초원", "식생의 수직 분포"] },
         { ph: "alpaca", emo: "🦙", t: "고산 초원", d: ["나무가 자라지 않는 높은 곳의 초원", "라마 · 알파카 방목"] },
-        { emo: "🏙️", t: "고산 도시", d: ["저지대보다 서늘하고 쾌적 → 도시 발달", "잉카 문명(쿠스코)"] }
+        { art: "highcity", emo: "🏙️", t: "고산 도시", d: ["저지대보다 서늘하고 쾌적 → 도시 발달", "잉카 문명(쿠스코)"] }
       ],
       life: [
         { k: "가옥", d: "돌 · 흙벽돌로 지은 집 — 큰 일교차에 대비" },
@@ -245,63 +245,7 @@
   /* ---------- 기압대의 계절 이동 — 달마다 기압대가 남북으로 오르내림 (모식도) ----------
      적도 저압대 중심 위도 ≈ 10° × cos(2π(월 − 7.5)/12) (7~8월 북쪽 끝, 1~2월 남쪽 끝)
      아열대 고압대 = 중심 ± 28°, 한대 전선(편서풍 비) = 중심 ± 45° */
-  const BELT = {
-    A: { city: "Darwin", title: "우기와 건기가 생기는 까닭",
-         say: ["적도 저압대(상승 기류 · 비)가 다윈 위로 오면 <b>우기</b>", "아열대 고압대(하강 기류)가 오면 <b>건기</b>", "기압대는 태양을 따라 여름 반구 쪽으로 이동"] },
-    C: { city: "Rome", title: "여름이 건조한 까닭 — 지중해성 기후",
-         say: ["여름: 아열대 고압대가 북쪽으로 올라와 로마를 덮음 → <b>건조</b>", "겨울: 고압대가 남쪽으로 내려가고 편서풍·전선이 옴 → <b>비</b>", "기압대의 계절 이동 → 3-8에서 3D로"] }
-  };
-  const MON = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-  function beltCenter(m) { return 10 * Math.cos(2 * Math.PI * (m - 6.5) / 12); }
-  function beltSvg(zone) {
-    const b = BELT[zone], c = C(b.city);
-    const W = 620, H = 400, yL = function (lat) { return 200 - lat * 3.6; };
-    let s = '<svg class="belt-svg" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="기압대의 계절 이동 모식도">' +
-      '<rect class="belt-sea" x="60" y="0" width="' + (W - 60) + '" height="' + H + '"/>';
-    [-50, -30, 0, 30, 50].forEach(function (lat) {
-      s += '<line class="belt-lat' + (lat === 0 ? " eq" : "") + '" x1="60" x2="' + W + '" y1="' + yL(lat) + '" y2="' + yL(lat) + '"/>' +
-        '<text class="belt-ax" x="52" y="' + (yL(lat) + 5) + '" text-anchor="end">' + (lat === 0 ? "적도" : Math.abs(lat) + "°" + (lat > 0 ? "N" : "S")) + '</text>';
-    });
-    /* 기압대 묶음 — 중심 위도 0일 때 그리고 translateY로 이동 */
-    const band = function (lat, half, cls, t) {
-      return '<rect class="belt-b ' + cls + '" x="60" y="' + yL(lat + half) + '" width="' + (W - 60) + '" height="' + (half * 2 * 3.6) + '"/>' +
-        '<text class="belt-t ' + cls + '" x="' + (W - 12) + '" y="' + (yL(lat) + 6) + '" text-anchor="end">' + t + '</text>';
-    };
-    s += '<g class="belt-move">' +
-      band(45, 8, "rain", "한대 전선 · 편서풍 — 비") + band(28, 7, "dry", "아열대 고압대 — 건조") +
-      band(0, 6, "rain", "적도 저압대 — 비") +
-      band(-28, 7, "dry", "아열대 고압대 — 건조") + band(-45, 8, "rain", "한대 전선 · 편서풍 — 비") + '</g>';
-    s += '<g class="belt-city"><circle cx="190" cy="' + yL(c.lat) + '" r="11"/><text x="208" y="' + (yL(c.lat) + 7) + '">' + escHtml(c.kr) + '</text></g>' +
-      '<text class="belt-mon" x="80" y="36">1월</text></svg>';
-    return s;
-  }
-  function beltBars(zone, m) {
-    const c = C(BELT[zone].city), mx = maxOf(c.p);
-    return '<div class="belt-bars">' + c.p.map(function (v, i) {
-      return '<div class="bb' + (i === m ? " on" : "") + '"><i style="height:' + Math.max(2, v / mx * 100).toFixed(1) + '%"></i><span>' + (i + 1) + '</span></div>';
-    }).join("") + '</div><div class="belt-cap">' + escHtml(c.kr) + ' 월 강수량 (' + mm(sum(c.p)) + ')</div>';
-  }
-  function beltBlock(zone) {
-    const b = BELT[zone];
-    return {
-      title: b.title,
-      html: '<div class="split belt"><div class="split-main"><div class="belt-ctl"></div><div class="belt-fig">' + beltSvg(zone) + '</div></div>' +
-        '<div class="split-side"><div class="belt-side">' + beltBars(zone, 0) + '</div>' + pts(b.say, "sm") +
-        '<p class="keyline sm">기압대 위치는 설명을 위한 모식도</p></div></div>',
-      init: function (el) {
-        const mv = el.querySelector(".belt-move"), c = C(b.city);
-        Anim.player(el.querySelector(".belt-ctl"), { steps: MON, interval: 1100, loop: true, onStep: function (m) {
-          mv.style.transform = "translateY(" + (-beltCenter(m) * 3.6).toFixed(1) + "px)";
-          el.querySelector(".belt-mon").textContent = MON[m];
-          el.querySelector(".belt-side").innerHTML = beltBars(zone, m);
-          /* 도시가 어느 기압대에 있는지 → 점 색 */
-          const d = c.lat - beltCenter(m);
-          const wet = Math.abs(d) <= 6 || Math.abs(Math.abs(d) - 45) <= 8;
-          el.querySelector(".belt-city").setAttribute("class", "belt-city " + (wet ? "wet" : Math.abs(Math.abs(d) - 28) <= 7 ? "dry" : ""));
-        } });
-      }
-    };
-  }
+  /* 기압대의 계절 이동 (5-1 · 5-3) → chapters/part5-belt.js PressureBelt */
 
   /* 고산 도시 해발 고도 (m, 개략값) — 5-6 고도와 기온 그림 */
   const ALT = [["Iquitos", 106], ["Mexico_City", 2240], ["Addis_Ababa", 2355], ["Bogota", 2640], ["Quito", 2850], ["Cusco", 3400], ["La_Paz", 3640]];
@@ -348,6 +292,11 @@
   }
 
   /* ---------- 공통 틀로 챕터 만들기 ---------- */
+  const SUM_EMO = { A: ["☀️", "🌧️", "🌴"], B: ["⬇️", "🏜️", "🐪"], C: ["🌍", "🌦️", "🍇"], D: ["❄️", "🌡️", "🌲"], E: ["🧊", "🌨️", "🦌"], H: ["⛰️", "🌤️", "🦙"] };
+  /* 수업 여는 질문 — 첫 화면(주민 생활) */
+  const LIFE_Q = { A: "바닥을 띄운 집 · 얇은 옷 — 어떤 날씨에 맞춘 모습일까?", B: "두꺼운 흙벽 · 몸을 감싼 옷 — 어떤 날씨에 맞춘 모습일까?",
+    C: "사계절이 뚜렷한 들판 — 어떤 작물과 생활이 보일까?", D: "통나무집 · 두꺼운 털옷 — 얼마나 추운 곳일까?",
+    E: "얼음집 · 털가죽 옷 · 썰매 — 나무가 보이지 않는 까닭은?", H: "계단식 밭 · 라마 · 판초 — 높은 곳의 날씨는 어떨까?" };
   function build(zone) {
     const d = Z[zone];
     const rep = C(d.rep);
@@ -365,7 +314,7 @@
       }).join("") + '</div>'
     });
 
-    if (BELT[zone]) blocks.push(beltBlock(zone));
+    if (PressureBelt.ZONE[zone]) blocks.push(PressureBelt.block(zone));
 
     blocks.push({
       title: "분포",
@@ -432,15 +381,17 @@
     blocks.push({
       title: "식생 · 경관",
       html: '<div class="vegs n' + d.veg.length + '">' + d.veg.map(function (v) {
-        return '<div class="veg' + (v.ph && Photo.has(v.ph) ? " has-ph" : "") + '" style="--zc:' + ZONES[zone].color + '">' +
-          (v.ph && Photo.has(v.ph) ? Photo.html(v.ph, { cls: "veg-ph" }) : '<div class="veg-emo" aria-hidden="true">' + v.emo + '</div>') + '<h4>' + v.t + '</h4>' + pts(v.d) + '</div>';
+        const ph = v.ph && Photo.has(v.ph), art = !ph && v.art && P5Art.has(v.art);
+        return '<div class="veg' + (ph || art ? " has-ph" : "") + '" style="--zc:' + ZONES[zone].color + '">' +
+          (ph ? Photo.html(v.ph, { cls: "veg-ph" }) : art ? P5Art.html(v.art) : '<div class="veg-emo" aria-hidden="true">' + v.emo + '</div>') + '<h4>' + v.t + '</h4>' + pts(v.d) + '</div>';
       }).join("") + '</div>'
     });
 
     blocks.push({
       title: "주민 생활",
-      html: '<div class="life"><figure class="life-img"><img src="assets/lifestyle/' + d.img + '.png" alt="' + ZONES[zone].name + ' 기후 지역의 주민 생활 삽화"></figure>' +
-        '<div class="life-cards">' + d.life.map(function (l) {
+      html:
+        '<div class="life"><figure class="life-img"><img src="assets/lifestyle/' + d.img + '.png" alt="' + ZONES[zone].name + ' 기후 지역의 주민 생활 삽화"></figure>' +
+        '<div class="life-cards">' + '<p class="life-q"><span class="qz-tag q">Q</span>' + LIFE_Q[zone] + '<small>그림 속 집 · 옷 · 음식 · 일에서 기후의 단서 찾기</small></p>' + d.life.map(function (l) {
           return '<div class="lc" style="--zc:' + ZONES[zone].color + '"><span class="lc-k">' + l.k + '</span><span class="lc-d">' + fmtKo(l.d) + '</span></div>';
         }).join("") + '</div></div>'
     });
@@ -448,7 +399,9 @@
     d.quiz.concat([graphQuiz(zone)]).forEach(function (q, i) {
       blocks.push({ title: "함께 풀기 " + (i + 1), kind: "quiz", quiz: q });
     });
-    blocks.push({ title: "정리", kind: "summary", terms: d.terms, html: pts(d.sum, "lg") });
+    blocks.push({ title: "정리", kind: "summary", terms: d.terms, html: sumCards(d.sum.map(function (t, i) {
+      return { emo: SUM_EMO[zone][i], t: ["형성 원인", "세부 유형", "경관 · 생활"][i], d: t.replace(/^형성 원인:\s*/, ""), c: ZONES[zone].color };
+    }), "g3") });
     CHAPTER_CONTENT[d.id] = { blocks: blocks };
   }
 

@@ -89,40 +89,14 @@
 /* ============================================================
    PART 5 보강 (2026-09-29) — 기압대의 계절 이동 · 식생 사진 칸
    ============================================================ */
-.belt .split-main { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-.belt-fig { flex: 1; min-height: 0; display: flex; border-radius: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); }
-.belt-svg { width: 100%; height: 100%; font-family: var(--font); }
-.belt-sea { fill: #eef4fb; }
-.belt-lat { stroke: #c9d3e0; stroke-width: 1.2; stroke-dasharray: 5 5; }
-.belt-lat.eq { stroke: #8a93a6; stroke-dasharray: none; }
-.belt-ax { font-size: 15px; font-weight: 800; fill: #6b7385; }
-.belt-move { transition: transform 1s cubic-bezier(.4, 0, .2, 1); }
-.belt-b.rain { fill: rgba(43, 111, 227, .22); }
-.belt-b.dry { fill: rgba(230, 167, 0, .28); }
-.belt-t { font-size: 15px; font-weight: 900; }
-.belt-t.rain { fill: #1f5fd0; }
-.belt-t.dry { fill: #9a6a00; }
-.belt-city circle { fill: #fff; stroke: #394155; stroke-width: 4; transition: fill .4s; }
-.belt-city.wet circle { fill: #2b6fe3; }
-.belt-city.dry circle { fill: #e6a700; }
-.belt-city text { font-size: 19px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; }
-.belt-mon { font-size: 30px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 6px; }
-.belt-side { padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
-.belt-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 150px; }
 .bb { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
 .bb i { width: 100%; border-radius: 4px 4px 0 0; background: #b9d0f3; transition: background .3s; }
 .bb span { font-size: 11px; font-weight: 800; color: var(--muted); }
 .bb.on i { background: #1f5fd0; }
 .bb.on span { color: var(--ink); }
-.belt-cap { margin-top: 6px; font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; }
-@media (prefers-reduced-motion: reduce) { .belt-move { transition: none; } }
-@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) { .belt-fig { height: 300px; flex: none; } }
 
 .veg.has-ph { padding-top: clamp(10px, 1vw, 16px); }
 .photo.veg-ph { height: 11em; flex: none; }
-.belt-ctl .anim-step i { display: none; }
-.belt-ctl .anim-step { padding: 5px 10px; }
-.belt-ctl .anim-steps { margin-left: 2px; }
 .vegs { align-items: stretch; align-content: center; }
 
 /* PART 5 2차 보강 — 사진 없는 식생 카드 · 다른 도시 보기 */
@@ -136,3 +110,367 @@
 .rep-b.on { color: #fff; background: var(--ink-2); border-color: var(--ink-2); }
 .rep-b.on small { color: #fff; opacity: .8; }
 .rep-graph { display: flex; flex-direction: column; min-height: 0; }
+
+/* ============================================================
+   PART 5 시뮬레이터 (chapters/part5-sims.js, 2026-09-30)
+   ============================================================ */
+.s5-time { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.s5-time .p2-slider { flex: 1; min-width: 280px; }
+.s5-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.s5-main > .p2-figwrap { min-height: 0; }
+.s5-side { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.s5-chart .p2-svg { width: 100%; height: auto; }
+.s5-ct { font-size: .78em; font-weight: 800; color: var(--muted); text-align: center; }
+.s5-ct i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; margin: 0 4px 3px 10px; vertical-align: middle; }
+.s5-ct i.d { background: #e06a2b; } .s5-ct i.f { background: #2f8f3a; }
+.sm5 { font-size: 11px !important; }
+.s5-tl { fill: none; stroke: #e06a2b; stroke-width: 3; stroke-linejoin: round; }
+.s5-tl.f { stroke: #2f8f3a; }
+.s5-now { stroke: #394155; stroke-width: 2; stroke-dasharray: 4 4; }
+.s5-nd { fill: #e06a2b; stroke: #fff; stroke-width: 2; }
+.s5-rainband rect { fill: rgba(43, 111, 227, .18); }
+.s5-note { font-size: .8em; font-weight: 700; color: var(--muted); line-height: 1.5; }
+
+/* 스콜의 하루 */
+.sq-sky { fill: url(#p2g-sky); transition: fill .6s; }
+.sq-svg.dark .sq-sky { fill: #8d99ad; }
+.sq-svg.dusk .sq-sky { fill: url(#p2g-night); }
+.sq-cu, .sq-cb, .sq-rain, .sq-bolt, .sq-up { transition: opacity .4s; }
+.sq-cb { transform-box: fill-box; transform-origin: 50% 100%; }
+.sq-cb path { fill: #9aa4b6; stroke: #7d879a; stroke-width: 2; }
+.sq-cb .anvil { fill: #b4bccb; }
+.sq-rain line { stroke: #2b6fe3; stroke-width: 3; stroke-linecap: round; animation: sq-fall .7s linear infinite; }
+@keyframes sq-fall { from { transform: translateY(0); opacity: 1; } to { transform: translateY(110px); opacity: .2; } }
+.sq-bolt { fill: none; stroke: #ffd84a; stroke-width: 5; stroke-linejoin: round; animation: sq-flash 1.3s steps(1) infinite; }
+@keyframes sq-flash { 0%, 70% { visibility: hidden; } 72%, 80% { visibility: visible; } 82% { visibility: hidden; } }
+.sq-clock { font-size: 26px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+
+/* 사막의 일교차 */
+.dt-sky { fill: #bfdcff; transition: fill .6s; }
+.dt-svg.night .dt-sky { fill: #1c2748; }
+.dt-moon { fill: #f3f0d8; opacity: 0; transition: opacity .6s; }
+.dt-svg.night .dt-moon { opacity: 1; }
+.dt-sun { transition: opacity .6s; }
+.dt-svg.night .dt-sun, .dt-svg.night .dt-in { opacity: 0; }
+.dt-in, .dt-out { transition: opacity .6s; }
+.dt-svg:not(.night) .dt-out { opacity: .15; }
+.dt-out .p2-arrow line { stroke: #6fa3ea; } .dt-out .p2-arrow polygon { fill: #6fa3ea; }
+.dt-ground.d { fill: #e8c48a; transition: fill .3s; } .dt-ground.f { fill: #58a247; }
+.dt-dune { fill: #e3bf7e; opacity: .9; }
+.dt-num { font-size: 30px; font-weight: 900; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .35); stroke-width: 5px; }
+.dt-t { fill: var(--ink-2); }
+
+/* 기후 시계 */
+.ck-play { flex: none; }
+.ck-play .anim-step i { display: none; } .ck-play .anim-step { padding: 5px 10px; }
+.s5-main.ck { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.ck-dial { min-height: 0; display: flex; align-items: center; justify-content: center; }
+.ck-svg { width: 100%; height: 100%; max-height: calc(100vh - 290px); font-family: var(--font); }
+.ck-p { fill: #b9d0f3; transition: fill .3s; } .ck-p.on { fill: #1f5fd0; }
+.ck-t { stroke: #fff; stroke-width: 1; }
+.ck-m { font-size: 16px; font-weight: 800; fill: var(--muted); } .ck-m.on { fill: var(--ink); font-size: 20px; font-weight: 900; }
+.ck-hand { stroke: #1c2433; stroke-width: 4; stroke-linecap: round; }
+.ck-c { fill: #fff; stroke: #1c2433; stroke-width: 3; }
+.ck-cm { font-size: 18px; font-weight: 900; fill: var(--muted); }
+.ck-ct { font-size: 28px; font-weight: 900; fill: var(--ink); }
+.ck-cp { font-size: 16px; font-weight: 900; fill: #1f5fd0; }
+.ck-h { font-size: 1.2em; font-weight: 800; }
+.ck-s { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; font-weight: 800; background: var(--panel-2); animation: p4-in .35s ease-out; }
+.ck-s span { font-family: var(--emoji); font-size: 1.6em; }
+.ck-cmp { display: grid; gap: 4px; margin-top: 4px; }
+.ck-r { display: grid; grid-template-columns: 1fr 4em 4.5em; gap: 8px; padding: 5px 10px; border-radius: 9px; font-size: .9em; font-weight: 800; }
+.ck-r.on { background: var(--accent-soft); }
+.ck-r b, .ck-r em { text-align: right; font-style: normal; font-variant-numeric: tabular-nums; } .ck-r em { color: #1f5fd0; }
+
+/* 백야와 극야 */
+.pn-ctl { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
+.pn-day { fill: #e3efff; } .pn-night { fill: #26324f; opacity: .9; }
+.pn-hz { stroke: #e6a700 !important; stroke-width: 3 !important; }
+.pn-hzt { font-size: 13px; font-weight: 900; fill: #b07800; }
+.pn-sun { fill: none; stroke: #f2a100; stroke-width: 4; }
+.pn-nt { font-size: 15px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.pn-sky .p2-ax { fill: #6b7385; }
+.pn-b { fill: #9fb6d6; } .pn-b.w { fill: #f2b705; } .pn-b.p { fill: #26324f; } .pn-b.on { stroke: #e0483a; stroke-width: 2.5; }
+@media (max-width: 700px) { .pn-ctl { grid-template-columns: 1fr; } }
+
+/* 안데스 토지 이용 */
+.an-play { flex: none; }
+.an-band { opacity: .75; transition: opacity .3s; } .an-band.on { opacity: 1; stroke: #1c2433; stroke-width: 2; }
+.an-emo { font-family: var(--emoji); font-size: 26px; opacity: .55; transition: opacity .3s; } .an-emo.on { opacity: 1; font-size: 32px; }
+.an-list { gap: 6px; }
+.an-r { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border-left: 7px solid var(--ac); background: var(--panel-2); transition: background .3s, transform .3s; }
+.an-r.on { background: color-mix(in srgb, var(--ac) 30%, #fff); transform: translateX(4px); }
+.an-e { font-family: var(--emoji); font-size: 1.5em; min-width: 2.2em; text-align: center; }
+.an-r b { display: block; font-weight: 900; } .an-r small { font-size: .8em; font-weight: 700; color: var(--muted); }
+
+@media (max-width: 1100px) { .s5-main, .s5-main.ck { grid-template-columns: 1fr; } .s5-main > .p2-figwrap { min-height: 280px; } }
+@media (prefers-reduced-motion: reduce) { .sq-rain line, .sq-bolt { animation: none; } }
+.dt-dune { fill: rgba(255, 230, 180, .35); }
+.pn-hzt { fill: #ffd84a; }
+.an-svg .ta-hiker > circle { fill: #e2632b; }
+.s5-main > *, .ed-main > *, .fw-main > *, .bl-main > * { min-width: 0; }
+@media (max-width: 700px) { .s5-time .p2-slider { min-width: 0; } .s5-main > .p2-figwrap { aspect-ratio: 16 / 10; min-height: 0; } }
+
+/* ============================================================
+   추가 시뮬레이터 (2026-09-30) — 1-1 30년 평균 · 1-2 경선 따라 걷기 · 5-2 사막의 원인 · 5-4 영구 동토층
+   ============================================================ */
+.av-ctl { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+.av-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.av-main > .p2-figwrap { min-height: 0; }
+.av-side { min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.av-st, .mw-st { font-size: .82em; font-weight: 900; color: var(--muted); }
+.av-dots svg { width: 100%; height: auto; }
+.av-cap { font-weight: 800; color: var(--ink-2); line-height: 1.5; }
+.av-bar { fill: #e2632b; transition: opacity .3s; } .av-bar.cold { fill: #2878d8; } .av-bar.off { opacity: .1; }
+.av-cum { fill: none; stroke: #e0483a; stroke-width: 3.5; stroke-linejoin: round; }
+.av-win { fill: rgba(43, 111, 227, .07); stroke: rgba(43, 111, 227, .35); stroke-width: 1; } .av-win.b { fill: rgba(43, 111, 227, .14); }
+.av-wm { stroke: #1d4fb0; stroke-width: 4; stroke-linecap: round; }
+.av-now { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.av-t0 { stroke: #e0483a; stroke-width: 2; stroke-dasharray: 5 4; }
+.av-row rect { fill: transparent; }
+.av-row.on rect { fill: rgba(43, 111, 227, .08); stroke: rgba(43, 111, 227, .4); }
+.av-rl { font-size: 15px; font-weight: 900; fill: var(--muted); }
+.av-row.on .av-rl { fill: #1d4fb0; }
+.av-rng { stroke: rgba(29, 79, 176, .35); stroke-width: 10; stroke-linecap: round; }
+.av-row:not(.on) .av-dot { fill: #8aa3c9; }
+.av-dot { fill: #1d4fb0; fill-opacity: .8; stroke: #fff; stroke-width: 2; }
+.av-svg .p2-grid.zero { stroke: var(--ink-2); stroke-width: 1.5; }
+
+.mw-sl { flex: 1; min-width: 280px; }
+.mw-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2fr) 92px minmax(0, 1fr); gap: clamp(10px, 1.2vw, 18px); }
+.mw-map { min-height: 0; }
+.mw-strip { min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.mw-bar { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-2); }
+.mw-bar > i { flex: 1; min-height: 0; }
+.mw-mk { position: absolute; left: 0; right: 0; height: 4px; margin-top: -2px; background: var(--ink); box-shadow: 0 0 0 2px #fff; border-radius: 2px; }
+.mw-log { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.mw-seq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mw-seq > i { font-style: normal; color: var(--muted); font-weight: 900; }
+.mw-z { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 10px; background: color-mix(in srgb, var(--zc) 14%, #fff); font-weight: 800; font-size: .88em; }
+.mw-z b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--zc); color: #fff; }
+.mw-z small { color: var(--muted); font-weight: 700; }
+.mw-sea { padding: 4px 10px; border-radius: 10px; background: #e5eef8; color: #4b6d94; font-weight: 800; font-size: .85em; }
+.mw-line { stroke: rgba(27, 34, 51, .45); stroke-dasharray: 2 2; }
+.mw-done { stroke: #1b2233; stroke-linecap: round; }
+.mw-pin { fill: #fff; stroke: #e0483a; }
+
+.dc-keys { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.dc-k { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px; padding: 10px 12px; border-radius: 14px; font: inherit; text-align: left; cursor: pointer; background: var(--panel); border: 2px solid var(--line); min-width: 0; }
+.dc-k i { grid-row: span 2; width: 22px; height: 22px; border-radius: 6px; border: 3px solid var(--cc); }
+.dc-k b { font-weight: 900; } .dc-k small { font-size: .74em; font-weight: 700; color: var(--muted); line-height: 1.35; }
+.dc-k.on { border-color: var(--cc); background: color-mix(in srgb, var(--cc) 12%, #fff); }
+.dc-k.on i { background: var(--cc); }
+.dc-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.dc-map { min-height: 0; }
+.dc-h { font-weight: 900; } .dc-h b { color: #b8860b; font-size: 1.2em; }
+.dc-r { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: .9em; }
+.dc-r span { display: flex; flex-wrap: wrap; gap: 4px; }
+.dc-r i { font-style: normal; font-size: .78em; font-weight: 800; padding: 2px 8px; border-radius: 8px; color: #fff; background: var(--cc); }
+.dc-hp { fill: rgba(230, 167, 0, .2); stroke: rgba(230, 167, 0, .7); stroke-width: .3; }
+.dc-in { fill: rgba(176, 122, 60, .22); stroke: #b07a3c; stroke-width: .3; stroke-dasharray: 1 .8; }
+.dc-mtn { fill: none; stroke: #8a5cc8; stroke-linecap: round; stroke-linejoin: round; }
+.dc-t { font-weight: 900; paint-order: stroke; stroke: #fff; }
+.dc-t.hp { fill: #9a6f00; } .dc-t.in { fill: #7b5122; } .dc-t.rs { fill: #6a3fb0; }
+.dc-d circle { fill: #fff; stroke: #b8860b; }
+.dc-d.hit circle { fill: #e6a700; stroke: #fff; }
+.dc-d.dim { opacity: .3; }
+.dc-dt { font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; }
+
+.pf-svg .pf-sky { transition: fill .6s; }
+.pf-svg.winter .pf-sky { fill: #c9d6e6; }
+.pf-perma { fill: #7f9bb8; }
+.pf-thaw { fill: #8a6a45; transition: height .6s; }
+.pf-refr { fill: #9fb6cf; transition: height .6s; }
+.pf-thaw2 { fill: #6b4a2b; opacity: .85; transition: height .6s; }
+.pf-snow rect { fill: #fff; opacity: 0; transition: opacity .6s; }
+.pf-svg.winter .pf-snow rect { opacity: 1; }
+.pf-grass path { fill: none; stroke: #5b9a3c; stroke-width: 2; transition: opacity .6s; }
+.pf-svg.winter .pf-grass path { opacity: 0; }
+.pf-tick { stroke: #fff; stroke-width: 2; }
+.pf-svg .p2-ax { fill: #fff; font-weight: 800; }
+.pf-lb { font-size: 17px; font-weight: 900; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .35); stroke-width: 4px; }
+.pf-ht { font-size: 13px; font-weight: 800; fill: var(--ink-2); paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+.pf-ht.warn { fill: #c0392b; font-size: 15px; }
+.pf-house > g { transition: transform .6s; }
+
+@media (max-width: 1100px) {
+  .av-main, .dc-main { grid-template-columns: 1fr; }
+  .mw-main { grid-template-columns: minmax(0, 1fr) 60px; }
+  .mw-log { grid-column: 1 / -1; }
+  .dc-keys { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .av-main, .mw-main, .dc-main { display: flex; flex-direction: column; flex: none; }
+  .mw-strip { display: none; }
+  .dc-keys { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   경관 탐험 (chapters/part5-scenes.js, 2026-09-30)
+   ============================================================ */
+.sx { grid-template-columns: minmax(0, 2.5fr) minmax(0, 1fr); align-items: center; }
+.sx > .sx-fig { flex: none; width: 100%; min-height: 0; aspect-ratio: 16 / 9; align-self: center; }
+.sx > .sx-side { align-self: stretch; }
+.sx-fig { background: #fff; }
+.sx-fig > .p2-svg { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); border-radius: 12px; }
+.sx-spot { cursor: pointer; outline: none; }
+.sx-dot { fill: #1b2233; stroke: #fff; stroke-width: 3; transition: fill .2s, transform .2s; }
+.sx-spot text { fill: #fff; font-size: 16px; font-weight: 900; pointer-events: none; }
+.sx-pulse { fill: none; stroke: #fff; stroke-width: 3; opacity: .9; animation: sxPulse 2.2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.sx-spot:hover .sx-dot, .sx-spot:focus-visible .sx-dot { fill: #2b6fe3; }
+.sx-spot.on .sx-dot { fill: #e0483a; transform: scale(1.18); }
+.sx-spot.on .sx-pulse { stroke: #e0483a; }
+@keyframes sxPulse { from { transform: scale(1); opacity: .9; } to { transform: scale(1.9); opacity: 0; } }
+.sx-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.sx-b { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; font: inherit; font-size: .86em; font-weight: 800; cursor: pointer; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink-2); }
+.sx-b i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #1b2233; color: #fff; font-style: normal; font-size: .82em; }
+.sx-b.on { background: #fdecea; border-color: #e0483a; color: var(--ink); } .sx-b.on i { background: #e0483a; }
+.sx-card { flex: 1; min-height: 0; overflow: auto; padding: 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); }
+.sx-card.in { animation: gsIn .3s ease-out; }
+.sx-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.sx-top b { font-size: 1.2em; font-weight: 900; }
+.sx-emo { font-size: 2.2em; line-height: 1; }
+.sx-intro { height: 100%; display: grid; place-content: center; text-align: center; font-weight: 800; color: var(--muted); line-height: 1.6; }
+.sx-tour { align-self: flex-start; }
+.sx-scale line { stroke: #fff; stroke-width: 2; } .sx-scale text { fill: #fff; font-size: 14px; font-weight: 900; paint-order: stroke; stroke: rgba(0, 0, 0, .45); stroke-width: 3px; }
+.sx-lbl { font-size: 14px; font-weight: 900; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .45); stroke-width: 3px; }
+.sx-flow { stroke-dasharray: 14 10; animation: sxFlow 1.4s linear infinite; }
+@keyframes sxFlow { to { stroke-dashoffset: -24; } }
+.sx-smoke circle { animation: sxSmoke 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.sx-smoke circle:nth-child(2) { animation-delay: .6s; } .sx-smoke circle:nth-child(3) { animation-delay: 1.2s; }
+@keyframes sxSmoke { 0%, 100% { transform: translate(0, 0) scale(1); opacity: .9; } 50% { transform: translate(6px, -6px) scale(1.12); opacity: .6; } }
+@media (max-width: 1100px) { .sx { grid-template-columns: 1fr; } }
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .sx { display: flex; flex-direction: column; flex: none; }
+  .sx-fig { flex: none; aspect-ratio: 16 / 9; min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sx-pulse, .sx-flow, .sx-smoke circle, .sx-card.in { animation: none; } }
+
+/* ============================================================
+   PART 5 시뮬레이터 2차 (chapters/part5-sims2.js, 2026-09-30)
+   ============================================================ */
+.s2-l { transition: opacity .6s; } .s2-l.off { opacity: 0; pointer-events: none; }
+.s2-t { font-size: 17px; font-weight: 900; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+.s2-t.sm { font-size: 14px; } .s2-t.warn { fill: #c0392b; }
+.s2-bv { transition: y .6s, height .6s; }
+.s2-bt { font-size: 15px; font-weight: 900; fill: var(--ink-2); }
+.sw-flame { animation: swFlame .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: bottom; }
+@keyframes swFlame { to { transform: scaleY(1.12) scaleX(.94); } }
+.sw-smoke circle { animation: sxSmoke 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.sw-cap { font-size: 20px; }
+.nm-p.on ellipse { fill: #e6a700; opacity: .5; }
+.nm-p.on .s2-t { fill: #b8860b; }
+.nm-land, .nm-snow { transition: fill .8s, opacity .8s; }
+.nm-gv { transition: y .8s, height .8s, fill .8s; }
+.fm-ev { font-size: 15px; fill: #1d4fb0; }
+.rv-seg { stroke: #f4f9fd; stroke-width: 16; stroke-linecap: round; filter: drop-shadow(0 0 1px #8fb3d4); transition: stroke .5s; }
+.rv-seg.open { stroke: #3a86c8; stroke-dasharray: 14 8; animation: sxFlow 1s linear infinite; }
+.rv-cell { transition: fill .5s; } .rv-cell.ice { fill: #e6eef6; stroke: #b9cfe2; } .rv-cell.open { fill: #3a86c8; }
+.ic-ice { transition: d .8s; }
+.ic-l { fill: none; stroke-width: 4; stroke-linejoin: round; transition: opacity .4s; }
+.ic-l.old { stroke: #8a93a5; stroke-dasharray: 8 6; } .ic-l.now { stroke: #e0483a; } .ic-l.dim { opacity: .35; }
+.ic-mk { stroke: #fff; stroke-width: 3; transition: cx .5s, cy .5s; } .ic-mk.old { fill: #6b7385; } .ic-mk.now { fill: #e0483a; }
+.ht-ax { font-size: 14px; font-weight: 800; fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .4); stroke-width: 3px; }
+.ht-mk { font-size: 14px; font-weight: 900; fill: #1b2233; paint-order: stroke; stroke: #fff; stroke-width: 4px; }
+@media (prefers-reduced-motion: reduce) { .sw-flame, .sw-smoke circle, .rv-seg.open { animation: none; } }
+
+/* ============================================================
+   기압대의 계절 이동 (chapters/part5-belt.js, 2026-10-01) — 대기대순환 3D와 같은 색
+   적도 저압대 #ea5a3d · 아열대 고압대 #dc9a2e · 한대 전선대 #23967f · 극 고압대 #4f83db
+   무역풍 #0fb3a3 · 편서풍 #7048e8 · 태양 #f6a821
+   ============================================================ */
+.pb { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; --eq: #ea5a3d; --sub: #dc9a2e; --front: #23967f; --polar: #4f83db; --trade: #0fb3a3; --west: #7048e8; --sun: #f6a821; }
+.pb-top { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px; }
+.pb-top .anim-step i { display: none; } .pb-top .anim-step { padding: 5px 10px; }
+.pb-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.pb-left { min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.pb-map { flex: 1; min-height: 0; }
+.pb-sec { flex: none; aspect-ratio: 1000 / 230; min-height: 0; }
+.pb-map .wm-img { filter: grayscale(1) contrast(.9); opacity: .5; }
+.pb-legend { flex: none; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82em; font-weight: 800; color: var(--ink-2); }
+.pb-lg { display: inline-flex; align-items: center; gap: 6px; }
+.pb-lg i { width: 22px; height: 12px; border-radius: 4px; }
+.pb-lg.eq i { background: color-mix(in srgb, var(--eq) 45%, #fff); border: 2px solid var(--eq); }
+.pb-lg.sub i { background: color-mix(in srgb, var(--sub) 45%, #fff); border: 2px solid var(--sub); }
+.pb-lg.front i { background: color-mix(in srgb, var(--front) 45%, #fff); border: 2px solid var(--front); }
+.pb-lg.trade i, .pb-lg.west i { height: 4px; border-radius: 2px; } .pb-lg.trade i { background: var(--trade); } .pb-lg.west i { background: var(--west); }
+.pb-lg.sun i { height: 0; border-top: 3px dashed var(--sun); border-radius: 0; }
+/* 지도 겹침 */
+.pb-band { opacity: .34; } .pb-band.eq { fill: #ea5a3d; } .pb-band.sub { fill: #dc9a2e; } .pb-band.front { fill: #23967f; } .pb-band.polar { fill: #4f83db; }
+.pb-edge { stroke-dasharray: 1.5 1; opacity: .8; } .pb-edge.eq { stroke: #ea5a3d; } .pb-edge.sub { stroke: #dc9a2e; } .pb-edge.front { stroke: #23967f; } .pb-edge.polar { stroke: #4f83db; }
+.pb-tag circle { fill: #fff; } .pb-tag.eq circle, .pb-tag.front circle { stroke: #e0483a; } .pb-tag.sub circle, .pb-tag.polar circle { stroke: #2b6fe3; }
+.pb-hl { font-weight: 900; } .pb-tag.eq .pb-hl, .pb-tag.front .pb-hl { fill: #e0483a; } .pb-tag.sub .pb-hl, .pb-tag.polar .pb-hl { fill: #2b6fe3; }
+.pb-bt { font-weight: 900; paint-order: stroke; stroke: #fff; }
+.pb-bt.eq { fill: #c63c22; } .pb-bt.sub { fill: #a86a0a; } .pb-bt.front { fill: #16715f; } .pb-bt.polar { fill: #2f62b8; }
+.pb-w .ga-l { fill: none; stroke-linecap: round; } .pb-w.trade .ga-l { stroke: #0fb3a3; } .pb-w.trade .ga-h { fill: #0fb3a3; } .pb-w.west .ga-l { stroke: #7048e8; } .pb-w.west .ga-h { fill: #7048e8; }
+.pb-sun { stroke: #f6a821; } .pb-sunico circle { fill: #ffd54a; stroke: #f6a821; stroke-width: .6; } .pb-st { font-weight: 900; fill: #b86e00; paint-order: stroke; stroke: #fff; }
+.pb-city circle { fill: #fff; stroke: #1b2233; }
+.pb-city.eq circle, .pb-city.front circle, .pb-city.west circle { fill: #2b6fe3; } .pb-city.sub circle, .pb-city.trade circle { fill: #f0b43a; }
+.pb-ct { font-weight: 900; fill: #1b2233; paint-order: stroke; stroke: #fff; }
+/* 단면 */
+.pb-move { transition: transform .7s cubic-bezier(.4, 0, .2, 1); }
+.pb-col { opacity: .3; } .pb-col.eq { fill: #ea5a3d; } .pb-col.sub { fill: #dc9a2e; } .pb-col.front { fill: #23967f; } .pb-col.polar { fill: #4f83db; }
+.pb-chev { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; animation: pbChev 1.8s ease-in-out infinite; }
+.pb-chev.up { stroke: #e2503a; } .pb-chev.down { stroke: #3b6fd8; }
+@keyframes pbChev { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.pb-cloud ellipse { fill: #fff; stroke: #9fb3cc; stroke-width: 1.5; } .pb-cloud path { stroke: #3f83e8; stroke-width: 2.5; stroke-linecap: round; }
+.pb-sunny circle { fill: #ffd54a; } .pb-sunny line { stroke: #f0a020; stroke-width: 2.5; stroke-linecap: round; }
+.pb-badge circle { fill: #fff; stroke-width: 3.5; } .pb-badge text { font-size: 19px; font-weight: 900; }
+.pb-badge.eq circle, .pb-badge.front circle { stroke: #e0483a; } .pb-badge.eq text, .pb-badge.front text { fill: #e0483a; }
+.pb-badge.sub circle, .pb-badge.polar circle { stroke: #2b6fe3; } .pb-badge.sub text, .pb-badge.polar text { fill: #2b6fe3; }
+.pb-ground { fill: #8cc06a; }
+.pb-ax { font-size: 15px; font-weight: 800; fill: var(--ink-2); } .pb-ax.sm { fill: var(--muted); }
+.pb-secsun { transition: transform .7s cubic-bezier(.4, 0, .2, 1); } .pb-secsun line { stroke: #f6a821; stroke-width: 2.5; } .pb-secsun circle { fill: #ffd54a; stroke: #f6a821; stroke-width: 2; }
+.pb-seccity { transition: transform .5s; } .pb-seccity path { fill: #1b2233; stroke: #fff; stroke-width: 2; }
+.pb-seccity text { font-size: 16px; font-weight: 900; fill: #1b2233; paint-order: stroke; stroke: #fff; stroke-width: 5px; }
+/* 오른쪽 */
+.pb-side { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.pb-nt { display: flex; align-items: baseline; gap: 10px; }
+.pb-mon { font-size: 2em; font-weight: 900; } .pb-cn { font-size: 1.15em; font-weight: 900; color: var(--ink-2); } .pb-cn small { color: var(--muted); font-weight: 700; }
+.pb-state { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 2px solid; transition: background .4s, border-color .4s; }
+.pb-state .pb-ico { font-size: 2.2em; line-height: 1; }
+.pb-state b { display: block; font-size: 1.15em; font-weight: 900; } .pb-state span { font-size: .88em; font-weight: 700; color: var(--ink-2); }
+.pb-state.eq { border-color: #ea5a3d; background: #fdece8; } .pb-state.eq b { color: #c63c22; }
+.pb-state.sub { border-color: #dc9a2e; background: #fdf3e2; } .pb-state.sub b { color: #a86a0a; }
+.pb-state.front { border-color: #23967f; background: #e4f5f1; } .pb-state.front b { color: #16715f; }
+.pb-state.trade { border-color: #0fb3a3; background: #e2f7f5; } .pb-state.trade b { color: #0b7f74; }
+.pb-state.west { border-color: #7048e8; background: #efeafd; } .pb-state.west b { color: #5433c2; }
+.pb-state.polar { border-color: #4f83db; background: #e8f0fc; } .pb-state.polar b { color: #2f62b8; }
+.pb-verdict { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 14px; border-radius: 12px; font-size: 1.4em; font-weight: 900; color: #fff; }
+.pb-verdict small { font-size: .55em; font-weight: 800; opacity: .92; }
+.pb-verdict.wet { background: #2b6fe3; } .pb-verdict.dry { background: #d98a12; }
+.pb-rt { font-size: .82em; font-weight: 900; color: var(--muted); margin-bottom: 4px; }
+.pb-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 130px; }
+.pb-bb { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; }
+.pb-bb b { font-size: 11px; font-weight: 900; color: #1d4fb0; min-height: 13px; }
+.pb-bb i { width: 100%; border-radius: 4px 4px 0 0; background: #bcd3f2; transition: background .3s; }
+.pb-bb.on i { background: #2b6fe3; }
+.pb-bb span { font-size: 11px; font-weight: 800; color: var(--muted); }
+.pb-bb.on span { color: var(--ink); }
+.pb-go { margin-top: auto; }
+@media (max-width: 1100px) { .pb-main { grid-template-columns: 1fr; } }
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .pb, .pb-main, .pb-left { flex: none; display: flex; flex-direction: column; }
+  .pb-sec { flex: none; aspect-ratio: 1000 / 230; min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .pb-move, .pb-secsun, .pb-seccity { transition: none; } .pb-chev { animation: none; } }
+
+/* ============================================================
+   PART 5 다듬기 (2026-10-01) — 식생 카드 삽화 · 형성 원인 카드 · 첫 화면 질문
+   ============================================================ */
+.veg-art { height: 11em; flex: none; border-radius: 14px; overflow: hidden; background: #eef4fb; }
+.veg-art svg { width: 100%; height: 100%; display: block; font-family: var(--font); }
+.pa-t { font-size: 15px; font-weight: 900; fill: #1b2233; paint-order: stroke; stroke: rgba(255, 255, 255, .85); stroke-width: 4px; }
+.pa-t.w { fill: #fff; stroke: rgba(0, 0, 0, .45); } .pa-t.sm { font-size: 13px; } .pa-t.big { font-size: 24px; } .pa-t.b { font-weight: 900; }
+.pa-t.c { fill: #1f5fd0; } .pa-t.p { fill: #5a3fb0; }
+.causes { align-items: stretch; align-content: center; }
+.cause { min-height: min(26em, 60vh); display: flex; flex-direction: column; gap: .5em; padding: clamp(20px, 2vw, 34px); font-size: 1.12em; }
+.cause-emo { display: grid; place-items: center; width: 2.2em; height: 2.2em; border-radius: 50%; background: color-mix(in srgb, var(--zc) 14%, #fff); font-size: 2.4em; }
+.cause h4 { font-size: 1.5em; }
+.cause .pts { margin-bottom: .6em; }
+.cause-go { margin-top: auto; }
+.causes .cause:nth-child(1) h4::before { content: "원인 1"; } .causes .cause:nth-child(2) h4::before { content: "원인 2"; } .causes .cause:nth-child(3) h4::before { content: "원인 3"; }
+.cause h4::before { display: block; margin-bottom: .2em; font-size: .52em; font-weight: 900; letter-spacing: .04em; color: var(--muted); }
+.life-q { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0 0 6px; padding: 14px 16px; border-radius: 14px; background: #fff4e8; border: 2px solid #f0a35a; font-size: 1.12em; font-weight: 900; line-height: 1.45; }
+.life-q .qz-tag { align-self: center; }
+.life-q small { flex-basis: 100%; font-size: .78em; font-weight: 700; color: var(--muted); }

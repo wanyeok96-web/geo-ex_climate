@@ -52,7 +52,8 @@ const Nodes = (function () {
       '</div>' +
       '<div class="nd-view" hidden>' +
         '<div class="nd-bar" role="tablist" aria-label="노드">' + bar + '</div>' +
-        '<div class="nd-topics" role="tablist" aria-label="소주제"></div>' +
+        '<div class="nd-topline"><div class="nd-topics" role="tablist" aria-label="소주제"></div>' +
+          '<button type="button" class="nd-zoom" aria-pressed="false">⤢ 그림 크게</button></div>' +
         '<div class="nd-stage">' +
           '<div class="nd-text" aria-live="polite"></div>' +
           '<div class="nd-fig"></div>' +
@@ -118,6 +119,13 @@ const Nodes = (function () {
 
     root.addEventListener("click", function (e) {
       if (e.target.closest("[data-nd-home]")) { home(); return; }
+      const zb = e.target.closest(".nd-zoom");
+      if (zb) {                                  // 그림 크게: 설명 칸을 접고 그림을 넓게 (수업 화면용)
+        const on = root.classList.toggle("wide");
+        zb.setAttribute("aria-pressed", String(on));
+        zb.textContent = on ? "⤡ 설명 함께 보기" : "⤢ 그림 크게";
+        return;
+      }
       const nb = e.target.closest("[data-nd]");
       if (nb && root.contains(nb) && !e.target.closest(".nd-fig")) { open(nb.getAttribute("data-nd"), 0); return; }
       const tb = e.target.closest(".nd-topic");

@@ -34,18 +34,24 @@ const Slides = (function () {
   function coverHtml(p, def) {
     let toc = "";
     def.blocks.forEach(function (b, i) {
-      toc += '<li><button type="button" class="toc-go" data-blk="' + (i + 1) + '">' +
-        '<span class="toc-n">' + (i + 2) + '</span>' + escHtml(b.title) + '</button></li>';
+      /* 블록 종류 표시: 시뮬레이터 · 함께 풀기 · 정리 · 경관 탐험 */
+      const k = b.kind === "quiz" || b.tag === "함께 풀기" ? "quiz" : b.kind === "summary" ? "sum" : /^시뮬레이터/.test(b.title) ? "sim" : /^경관 탐험/.test(b.title) ? "scene" : b.kind === "think" ? "think" : "";
+      toc += '<li><button type="button" class="toc-go' + (k ? " k-" + k : "") + '" data-blk="' + (i + 1) + '">' +
+        '<span class="toc-n">' + (i + 2) + '</span><span class="toc-t">' + escHtml(b.title.replace(/^시뮬레이터 — /, "")) + '</span>' +
+        (k === "sim" ? '<span class="toc-k">시뮬레이터</span>' : "") + '</button></li>';
     });
     const zone = p.zone ? ZONES[p.zone] : null;
-    return '<section class="blk blk--cover" data-blk="0">' +
-      '<div class="cover-in">' +
+    const art = typeof CoverArt !== "undefined" ? CoverArt.art(p) : "";
+    return '<section class="blk blk--cover' + (art ? " has-art" : "") + '" data-blk="0" style="--pc:' + (typeof CoverArt !== "undefined" ? CoverArt.color(p) : "var(--accent)") + '">' +
+      '<span class="cover-wm" aria-hidden="true">' + p.id + '</span>' +
+      '<div class="cover-grid"><div class="cover-in">' +
         '<div class="crumb"><span class="pn">PART ' + p.part.id + '</span>' + escHtml(p.part.title) + '</div>' +
         '<h2 class="cover-title"><span class="cid">' + p.id + '</span>' + escHtml(p.title) +
           (zone ? ' <span class="zone-chip" style="--zc:' + zone.color + '"><b>' + p.zone + '</b>' + escHtml(p.chapter.codes) + '</span>' : "") + '</h2>' +
-        '<p class="goal"><span class="goal-tag">학습 목표</span>' + fmtKo(escHtml(p.goal)) + '</p>' +
+        '<p class="goal cover-goal"><span class="goal-tag">학습 목표</span>' + fmtKo(escHtml(p.goal)) + '</p>' +
+        '<div class="cover-tt">이 챕터의 흐름 <small>' + def.blocks.length + '장</small></div>' +
         '<ol class="cover-toc">' + toc + '</ol>' +
-      '</div>' +
+      '</div>' + (art ? '<div class="cover-art">' + art + '</div>' : "") + '</div>' +
       '<div class="scroll-hint" aria-hidden="true">아래로 스크롤 <span>↓</span></div>' +
     '</section>';
   }

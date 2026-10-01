@@ -425,13 +425,14 @@
     return {
       html: '<div class="p2-ctl hs-ctl">' + K.seg("sun", ["☀️ 햇빛 비춤 (여름·낮)", "🌙 햇빛 약함 (겨울·밤)"], 0) +
           '<button type="button" class="anim-btn hs-play on">⏸ 멈춤</button><button type="button" class="anim-btn anim-reset hs-reset" aria-label="처음부터">↻</button>' +
-          '<label class="hs-auto"><input type="checkbox" checked> 자동 전환</label></div>' +
+          '<label class="hs-auto"><input type="checkbox" checked> 자동 전환</label>' + K.seg("spd", ["속도 ×½", "×1", "×2"], 1) + '</div>' +
         '<div class="p2-row hs-read"></div>' +
         '<div class="p2-figwrap">' + s + '</div>' +
         K.cap("같은 햇빛을 받아도 육지는 빨리 데워지고 빨리 식음, 바다는 천천히 — 바다의 <b>비열</b>이 크기 때문 (예시 모형)"),
       init: function (fig) {
         const svg = fig.querySelector(".hs-svg");
-        let land = 15, sea = 15, sun = true, run = true, hist = [], tick = 0, acc = 0;
+        let land = 15, sea = 15, sun = true, run = true, hist = [], tick = 0, acc = 0, spd = 1;
+        K.bindSeg(fig, "spd", function (i) { spd = [0.5, 1, 2][i]; });
         const autoBox = fig.querySelector(".hs-auto input");
         function setSun(on, fromSeg) {
           sun = on; svg.classList.toggle("night", !on);
@@ -465,7 +466,7 @@
         function reset() { land = 15; sea = 15; hist = []; tick = 0; setSun(true); draw(); }
         const stop = loop(svg, function (t, dt) {
           if (!run) return;
-          acc += dt;
+          acc += dt * spd;
           while (acc > 0.09) { acc -= 0.09; step(); }
           draw();
         });
@@ -610,13 +611,14 @@
     return {
       html: K.seg("wind", ["바람 → (서쪽에서)", "← 바람 (동쪽에서)"], 0) +
         '<div class="p2-slider"><label for="p2-tsh">공기의 위치</label><input type="range" id="p2-tsh" min="0" max="100" step="1" value="0"><span class="p2-sl-v"></span>' +
-          '<button type="button" class="anim-btn tsh-play on">⏸ 멈춤</button></div>' +
+          '<button type="button" class="anim-btn tsh-play on">⏸ 멈춤</button>' + K.seg("spd", ["×½", "×1", "×2"], 1) + '</div>' +
         '<div class="p2-row tsh-read"></div>' +
         '<div class="p2-figwrap p2-scene">' + scene(false) + '</div>' +
         K.cap("예시 모형 — 올라갈 때: 구름 전 100m마다 약 1℃, 구름 속 약 0.5℃ 하강 / 내려갈 때: 100m마다 약 1℃ 상승 → 산을 넘은 바람은 <b>고온 건조</b> — 푄 (높새바람)"),
       init: function (fig) {
         const sc = fig.querySelector(".p2-scene"), inp = fig.querySelector("#p2-tsh");
-        let k = 0, run = !REDUCED, path = null, len = 0, east = false;
+        let k = 0, run = !REDUCED, path = null, len = 0, east = false, spd = 1;
+        K.bindSeg(fig, "spd", function (i) { spd = [0.5, 1, 2][i]; });
         function bind() { path = sc.querySelector(".tsh-path"); len = path.getTotalLength(); }
         function set(v) {
           k = clamp(v, 0, 1); inp.value = Math.round(k * 100);
@@ -641,7 +643,7 @@
         btn.addEventListener("click", function () { run = !run; syncBtn(); });
         syncBtn();
         bind(); set(REDUCED ? 0.8 : 0);
-        return loop(sc, function (t, dt) { if (run) set((k + dt / 9) % 1); });
+        return loop(sc, function (t, dt) { if (run) set((k + dt / 9 * spd) % 1); });
       }
     };
   };
@@ -721,6 +723,665 @@
         });
         const pl = K.player(fig, ".fr-ctl", ["두 기단", "다가감", "만남 — 전선", "따뜻한 공기 상승", "구름 · 비"], function (k) { sc.setAttribute("data-st", k); }, { interval: 1800, start: 4 });
         return function () { stop(); pl.pause(); };
+      }
+    };
+  };
+
+  /* ==========================================================
+     2차 시뮬레이터 (선생님 요청 — 시뮬레이션 기능 업그레이드, 2026-09-30)
+     ========================================================== */
+  const ALL = CITIES.filter(function (c) { return c.type !== "H" && c.lat > -60; });     // 고산 도시 · 남극 기지 제외
+  const ZC = function (c) { return ZONES[c.type.charAt(0)] ? ZONES[c.type.charAt(0)].color : "#8a8f98"; };
+  const range = function (c) { return U.maxOf(c.t) - U.minOf(c.t); };
+
+  /* 산점도 틀: 축 · 눈금 → { svg 문자열 앞부분, x(), y() } */
+  function scatterFrame(o) {
+    const W = o.W || 600, H = o.H || 360, L = 58, R = 18, T = 34, B = 46;
+    const x = function (v) { return L + (v - o.x0) / (o.x1 - o.x0) * (W - L - R); };
+    const y = function (v) { return T + (o.y1 - v) / (o.y1 - o.y0) * (H - T - B); };
+    let s = K.svgOpen(W, H, o.label, "sc-svg " + (o.cls || ""));
+    for (let v = o.y0; v <= o.y1; v += o.ys) s += '<line class="p2-grid' + (v === 0 ? " zero" : "") + '" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="p2-ax" x="' + (L - 8) + '" y="' + (y(v) + 5) + '" text-anchor="end">' + (v < 0 ? "−" + -v : v) + '</text>';
+    for (let v = o.x0; v <= o.x1; v += o.xs) s += '<text class="p2-ax" x="' + x(v) + '" y="' + (H - B + 22) + '" text-anchor="middle">' + v + (o.xu || "") + '</text>';
+    s += '<text class="p2-unit" x="' + (L - 50) + '" y="' + (T - 16) + '" text-anchor="start">' + o.yu + '</text>' +
+      '<text class="p2-unit" x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + o.xl + '</text>' +
+      '<line class="p2-base" x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '"/>';
+    return { s: s, x: x, y: y, W: W, H: H, L: L, R: R, T: T, B: B };
+  }
+  /* 최소 제곱 직선 */
+  function fit(pts) {
+    const n = pts.length, mx = U.mean(pts.map(function (p) { return p[0]; })), my = U.mean(pts.map(function (p) { return p[1]; }));
+    let a = 0, b = 0;
+    pts.forEach(function (p) { a += (p[0] - mx) * (p[1] - my); b += (p[0] - mx) * (p[0] - mx); });
+    const k = b ? a / b : 0;
+    return { k: k, c: my - k * mx, n: n };
+  }
+
+  /* 기온 ③ 기온의 연교차 — 세계 도시 산점도(위도 ↔ 연교차) + 도시 고르기 */
+  P2F.tRange = function () {
+    const PRE = [C("Singapore"), C("Seoul"), C("Ulaanbaatar")];
+    const F = scatterFrame({ label: "위도와 기온의 연교차", x0: 0, x1: 90, xs: 15, xu: "°", y0: 0, y1: 45, ys: 15, yu: "연교차(℃)", xl: "위도(남·북 구분 없이)", cls: "tr-sc", W: 560, H: 430 });
+    const pts = ALL.map(function (c) { return [Math.abs(c.lat), range(c)]; }), L1 = fit(pts);
+    let s = F.s + '<line class="tr-fit" x1="' + F.x(0) + '" y1="' + F.y(L1.c) + '" x2="' + F.x(80) + '" y2="' + F.y(L1.c + L1.k * 80) + '"/>';
+    s += ALL.map(function (c) {
+      return '<circle class="tr-dot" data-id="' + c.id + '" cx="' + F.x(Math.abs(c.lat)).toFixed(1) + '" cy="' + F.y(range(c)).toFixed(1) + '" r="6" style="fill:' + ZC(c) + '"><title>' + escHtml(c.kr) + '</title></circle>';
+    }).join("") + '<g class="tr-sel"><circle r="12"/><text y="-18" text-anchor="middle"></text></g></svg>';
+    const opts = CITIES.slice().filter(function (c) { return c.type !== "H"; }).sort(function (a, b) { return a.kr.localeCompare(b.kr, "ko"); })
+      .map(function (c) { return '<option value="' + c.id + '">' + escHtml(c.kr) + '</option>'; }).join("");
+    function body(c) {
+      const mx = U.maxOf(c.t), mn = U.minOf(c.t);
+      return '<div class="p2-row">' +
+          K.big("최난월", U.deg(mx), K.MON[c.t.indexOf(mx)], "warm") + K.big("최한월", U.deg(mn), K.MON[c.t.indexOf(mn)], "cold") +
+          K.big("기온의 연교차", U.n1(mx - mn) + "℃", escHtml(c.kr) + " " + U.latTxt(c), "key") + '</div>';
+    }
+    return {
+      html: '<div class="p2-ctl tr-ctl">' + K.seg("city", PRE.map(function (c) { return escHtml(c.kr) + " <small>" + U.latTxt(c) + "</small>"; }), 1) +
+          '<label class="tr-pick">다른 도시 <select>' + opts + '</select></label></div>' +
+        '<div class="tr-read">' + body(PRE[1]) + '</div>' +
+        '<div class="tr-two"><div class="p2-figwrap tr-a">' + s + '</div><div class="p2-figwrap tr-b"></div></div>' +
+        K.cap("점 하나 = 도시 하나(색 = 기후대) · 점을 누르면 그 도시 · 점선 = 전체 경향: 위도가 높을수록 연교차가 커짐, 같은 위도라도 대륙 내부는 더 큼"),
+      init: function (fig) {
+        const svg = fig.querySelector(".tr-sc"), sel = fig.querySelector(".tr-pick select");
+        function show(c) {
+          fig.querySelector(".tr-read").innerHTML = body(c);
+          fig.querySelector(".tr-b").innerHTML = K.chart({ cities: [c], show: "t", range: true, label: c.kr + " 월평균 기온" });
+          const g = svg.querySelector(".tr-sel");
+          g.setAttribute("transform", "translate(" + F.x(Math.abs(c.lat)).toFixed(1) + " " + F.y(range(c)).toFixed(1) + ")");
+          g.querySelector("text").textContent = c.kr;
+          svg.querySelectorAll(".tr-dot").forEach(function (d) { d.classList.toggle("on", d.getAttribute("data-id") === c.id); });
+          sel.value = c.id;
+        }
+        K.bindSeg(fig, "city", function (i) { show(PRE[i]); });
+        sel.addEventListener("change", function () { fig.querySelectorAll('[data-seg="city"] .p2-sb').forEach(function (b) { b.classList.remove("on"); }); show(C(sel.value)); });
+        svg.addEventListener("click", function (e) {
+          const d = e.target.closest(".tr-dot");
+          if (!d) return;
+          fig.querySelectorAll('[data-seg="city"] .p2-sb').forEach(function (b) { b.classList.remove("on"); });
+          show(C(d.getAttribute("data-id")));
+        });
+        show(PRE[1]);
+      }
+    };
+  };
+
+  /* 강수 ① 의미 — 우량계 시뮬레이터: 비 세기 · 눈 · 시간 · 강수량 */
+  const RAINS = [
+    { n: "🌦️ 약한 비", r: 2, drops: 10, v: 260 },
+    { n: "🌧️ 보통 비", r: 8, drops: 26, v: 360 },
+    { n: "⛈️ 강한 비", r: 30, drops: 60, v: 520 },
+    { n: "❄️ 눈", r: 3, drops: 30, v: 70, snow: true }
+  ];
+  P2F.pMeasure = function () {
+    const top = 120, bot = 320, mmMax = 50, pxPerMm = (bot - top) / mmMax;
+    let ticks = "";
+    for (let v = 0; v <= mmMax; v += 10) ticks += '<line class="tick" x1="352" x2="366" y1="' + (bot - v * pxPerMm) + '" y2="' + (bot - v * pxPerMm) + '"/><text class="p2-ax" x="372" y="' + (bot - v * pxPerMm + 5) + '">' + v + '</text>';
+    const s = K.svgOpen(600, 360, "우량계로 강수량 재기", "pm-svg") +
+      '<rect class="p2-sky pm-sky" x="0" y="0" width="600" height="330"/>' +
+      '<g class="pm-fall"></g>' +
+      '<g class="p2-gauge">' +
+        '<polygon class="funnel" points="236,70 364,70 316,112 284,112"/>' +
+        '<rect class="tube" x="250" y="' + top + '" width="100" height="' + (bot - top) + '" rx="6"/>' +
+        '<rect class="water" x="252" y="' + bot + '" width="96" height="0" rx="4"/>' + ticks +
+        '<text class="p2-unit" x="372" y="' + (top - 10) + '">mm</text>' +
+      '</g>' +
+      '<rect class="pm-snowbed" x="430" y="316" width="140" height="0" rx="4"/>' +
+      '<text class="p2-lbl sm pm-snowt" x="500" y="344" text-anchor="middle"></text>' +
+      '<rect class="p2-grass" x="0" y="330" width="600" height="30"/>' +
+      '<text class="pm-clock" x="24" y="40">0:00</text>' +
+    '</svg>';
+    return {
+      html: '<div class="p2-ctl pm-ctl">' + K.seg("rain", RAINS.map(function (x) { return x.n; }), 1) +
+          '<button type="button" class="anim-btn pm-play">▶ 내리기</button><button type="button" class="anim-btn anim-reset pm-reset" aria-label="비우기">↻ 비우기</button></div>' +
+        '<div class="p2-row pm-read"></div>' +
+        '<div class="p2-figwrap">' + s + K.photo("rain-gauge", "tr") + '</div>' +
+        K.cap("강수량 = 떨어진 물이 흘러가지 않고 고인 깊이(mm) · 눈은 녹여서 잼 — 눈 약 1cm ≈ 물 1mm (예시 모형: 1초 = 10분)"),
+      init: function (fig) {
+        const svg = fig.querySelector(".pm-svg"), fall = svg.querySelector(".pm-fall"), w = svg.querySelector(".water");
+        let kind = 1, run = false, mm = 0, snowCm = 0, minutes = 0, parts = [];
+        function setBtn() { const b = fig.querySelector(".pm-play"); b.classList.toggle("on", run); b.textContent = run ? "⏸ 멈춤" : "▶ 내리기"; }
+        function paint() {
+          const R = RAINS[kind];
+          w.setAttribute("y", (bot - Math.min(mm, mmMax) * pxPerMm).toFixed(1));
+          w.setAttribute("height", (Math.min(mm, mmMax) * pxPerMm).toFixed(1));
+          svg.querySelector(".pm-snowbed").setAttribute("y", (316 - snowCm * 3).toFixed(1));
+          svg.querySelector(".pm-snowbed").setAttribute("height", (snowCm * 3).toFixed(1));
+          svg.querySelector(".pm-snowt").textContent = snowCm > 0.05 ? "쌓인 눈 " + snowCm.toFixed(1) + "cm" : "";
+          const hh = Math.floor(minutes / 60), m2 = Math.floor(minutes % 60);
+          svg.querySelector(".pm-clock").textContent = hh + ":" + (m2 < 10 ? "0" : "") + m2;
+          fig.querySelector(".pm-read").innerHTML = K.big("강수 세기", R.r + "mm/시간", R.snow ? "눈 " + R.r + "cm/시간 ≈ 물 " + R.r + "mm" : R.n.replace(/^\S+ /, ""), "rain") +
+            K.big("지난 시간", hh + "시간 " + m2 + "분", "1초 = 10분") + K.big("강수량", (Math.round(mm * 10) / 10).toFixed(1) + "mm", mm >= mmMax ? "눈금 끝 — 비우기" : "우량계 눈금", "key");
+        }
+        function makeParts() {
+          const R = RAINS[kind];
+          fall.innerHTML = ""; parts = [];
+          for (let i = 0; i < R.drops; i++) {
+            const e = R.snow ? el("circle", { r: "4", class: "pm-flake" }) : el("line", { class: "pm-drop", x1: 0, y1: 0, x2: -3, y2: 14 });
+            fall.appendChild(e);
+            parts.push({ e: e, x: 20 + Math.random() * 560, y: Math.random() * 330, v: R.v * (0.8 + Math.random() * 0.4), s: Math.random() * 6 });
+          }
+        }
+        K.bindSeg(fig, "rain", function (i) { kind = i; makeParts(); paint(); });
+        fig.querySelector(".pm-play").addEventListener("click", function () { run = !run; setBtn(); });
+        fig.querySelector(".pm-reset").addEventListener("click", function () { mm = 0; snowCm = 0; minutes = 0; paint(); });
+        makeParts(); setBtn(); paint();
+        return loop(svg, function (t, dt) {
+          const R = RAINS[kind];
+          fall.style.opacity = run ? 1 : 0.15;
+          parts.forEach(function (p) {
+            if (run) { p.y += p.v * dt; if (R.snow) p.x += Math.sin(t * 2 + p.s) * 0.6; }
+            if (p.y > 330) { p.y = -10; p.x = 20 + Math.random() * 560; }
+            p.e.setAttribute("transform", "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ")");
+          });
+          if (!run || mm >= mmMax) return;
+          const dm = dt * 10;                         // 1초 = 10분
+          minutes += dm;
+          if (R.snow) { snowCm += R.r * dm / 60; mm += R.r * dm / 60; } else mm += R.r * dm / 60;
+          paint();
+        });
+      }
+    };
+  };
+
+  /* 바람 ① 기압과 바람 — 두 지점의 기압을 바꾸면 바람의 방향 · 세기가 바뀜 */
+  P2F.wPressure = function () {
+    const s = K.svgOpen(600, 360, "기압 차와 바람", "wp-svg") +
+      '<rect class="p2-sky" x="0" y="0" width="600" height="320"/><rect class="p2-ground" x="0" y="320" width="600" height="40"/>' +
+      [["a", 40], ["b", 410]].map(function (x) {
+        let dots = "";
+        for (let i = 0; i < 40; i++) dots += '<circle data-i="' + i + '" cx="' + (x[1] + 16 + (i * 37) % 118) + '" cy="' + (70 + (i * 53) % 230) + '" r="5"/>';
+        return '<g class="wp-col ' + x[0] + '"><rect class="wp-box" x="' + x[1] + '" y="50" width="150" height="270" rx="12"/><g class="wp-dots">' + dots + '</g>' +
+          '<text class="p2-hl wp-hl" x="' + (x[1] + 75) + '" y="200" text-anchor="middle"></text><text class="p2-lbl sm wp-hp" x="' + (x[1] + 75) + '" y="250" text-anchor="middle"></text></g>';
+      }).join("") +
+      '<g class="wp-arrow"></g><g class="wp-parts"></g><text class="p2-lbl wp-t" x="300" y="270" text-anchor="middle"></text>' +
+    '</svg>';
+    return {
+      html: '<div class="wp-sliders">' +
+          '<div class="p2-slider"><label for="p2-pa">왼쪽 기압</label><input type="range" id="p2-pa" data-k="a" min="990" max="1034" step="1" value="1016"><span class="p2-sl-v wp-va"></span></div>' +
+          '<div class="p2-slider"><label for="p2-pb">오른쪽 기압</label><input type="range" id="p2-pb" data-k="b" min="990" max="1034" step="1" value="1004"><span class="p2-sl-v wp-vb"></span></div>' +
+        '</div>' +
+        '<div class="p2-row wp-read"></div>' +
+        '<div class="p2-figwrap">' + s + '</div>' + K.cap("공기가 많이 쌓인 곳 = 고기압 → 공기가 적은 저기압 쪽으로 이동 = 바람 · 기압 차가 클수록 강함 (풍속은 예시 값)"),
+      init: function (fig) {
+        const svg = fig.querySelector(".wp-svg");
+        let pa = 1016, pb = 1004, parts = [];
+        function set() {
+          const d = pa - pb, ad = Math.abs(d), dir = d > 0 ? 1 : d < 0 ? -1 : 0;
+          fig.querySelector(".wp-va").textContent = pa + "hPa"; fig.querySelector(".wp-vb").textContent = pb + "hPa";
+          [["a", pa], ["b", pb]].forEach(function (x) {
+            const g = svg.querySelector(".wp-col." + x[0]), n = Math.round(8 + (x[1] - 990) / 44 * 32), hi = x[1] > (x[0] === "a" ? pb : pa), lo = x[1] < (x[0] === "a" ? pb : pa);
+            g.querySelectorAll(".wp-dots circle").forEach(function (c, i) { c.style.opacity = i < n ? 1 : 0; });
+            g.classList.toggle("high", hi); g.classList.toggle("low", lo);
+            g.querySelector(".wp-hl").textContent = hi ? "고" : lo ? "저" : "=";
+            g.querySelector(".wp-hp").textContent = x[1] + "hPa";
+          });
+          const v = ad * 0.6;
+          svg.querySelector(".wp-arrow").innerHTML = dir ? K.ar(dir > 0 ? 200 : 400, 292, dir > 0 ? 400 : 200, 292, "p2-arrow wind", 4 + Math.min(18, ad * 0.7)) : "";
+          svg.querySelector(".wp-t").textContent = dir ? "바람 " + (dir > 0 ? "→" : "←") + " 약 " + v.toFixed(1) + "m/s" : "기압이 같음 → 바람 없음";
+          fig.querySelector(".wp-read").innerHTML = K.big("기압 차", ad + "hPa", "", "key") +
+            K.big("바람 방향", dir ? (dir > 0 ? "왼쪽 → 오른쪽" : "오른쪽 → 왼쪽") : "없음", "고기압 → 저기압") +
+            K.big("바람 세기(예시)", v.toFixed(1) + "m/s", ad >= 20 ? "강함" : ad >= 8 ? "보통" : ad > 0 ? "약함" : "고요", "rain");
+          const want = Math.min(24, Math.round(ad * 0.9));
+          const box = svg.querySelector(".wp-parts");
+          while (parts.length < want) { const c = el("circle", { r: "5" }); box.appendChild(c); parts.push({ e: c, x: 200 + Math.random() * 200, y: 268 + Math.random() * 44 }); }
+          while (parts.length > want) { const p = parts.pop(); p.e.remove(); }
+          svg.dataset.dir = dir; svg.dataset.sp = v;
+        }
+        fig.querySelectorAll(".wp-sliders input").forEach(function (inp) {
+          inp.addEventListener("input", function () { if (inp.dataset.k === "a") pa = +inp.value; else pb = +inp.value; set(); });
+        });
+        set();
+        return loop(svg, function (t, dt) {
+          const dir = +svg.dataset.dir, sp = +svg.dataset.sp;
+          parts.forEach(function (p) {
+            p.x += dir * (40 + sp * 14) * dt;
+            if (p.x > 400) p.x = 200; if (p.x < 200) p.x = 400;
+            p.e.setAttribute("cx", p.x.toFixed(1)); p.e.setAttribute("cy", p.y.toFixed(1));
+            p.e.setAttribute("opacity", Math.min(1, (p.x - 200) / 30, (400 - p.x) / 30).toFixed(2));
+          });
+        });
+      }
+    };
+  };
+
+  /* 위도 ② 위도별 기온 — 위도대 탐색기: 지도 띠 + 위도–연평균 기온 산점도 */
+  P2F.latTemp = function () {
+    const F = scatterFrame({ label: "위도와 연평균 기온", x0: 0, x1: 90, xs: 15, xu: "°", y0: -30, y1: 30, ys: 10, yu: "연평균(℃)", xl: "위도", cls: "lt-sc", W: 560, H: 430 });
+    const pts = ALL.map(function (c) { return [Math.abs(c.lat), U.mean(c.t)]; }), L1 = fit(pts);
+    const s = F.s + '<rect class="lt-band" x="0" y="' + F.T + '" width="0" height="' + (F.H - F.T - F.B) + '"/>' +
+      '<line class="tr-fit" x1="' + F.x(0) + '" y1="' + F.y(L1.c) + '" x2="' + F.x(90) + '" y2="' + F.y(L1.c + L1.k * 90) + '"/>' +
+      ALL.map(function (c) { return '<circle class="lt-dot" data-id="' + c.id + '" data-lat="' + Math.abs(c.lat).toFixed(2) + '" cx="' + F.x(Math.abs(c.lat)).toFixed(1) + '" cy="' + F.y(U.mean(c.t)).toFixed(1) + '" r="6" style="fill:' + ZC(c) + '"><title>' + escHtml(c.kr) + '</title></circle>'; }).join("") + '</svg>';
+    return {
+      html: '<div class="p2-slider"><label for="p2-lt">위도대</label><input type="range" id="p2-lt" min="0" max="80" step="1" value="0"><span class="p2-sl-v"></span></div>' +
+        '<div class="p2-ctl lt-ctl"></div>' +
+        '<div class="p2-row lt-read"></div>' +
+        '<div class="tr-two"><div class="p2-mapbox lt-map" data-map="lat"></div><div class="p2-figwrap">' + s + '</div></div>' +
+        K.cap("위도대(±5°) 안의 도시만 밝게 · 점선 = 전체 경향 — 위도 10°마다 연평균 기온 약 " + Math.abs(L1.k * 10).toFixed(1) + "℃씩 낮아짐 (고산 도시 · 남극 기지 제외)"),
+      init: function (fig) {
+        const inp = fig.querySelector("input"), svg = fig.querySelector(".lt-sc");
+        let cur = 0, stop = function () {};
+        const m = K.makeMap(fig.querySelector('[data-map="lat"]'), { legend: false, info: false, latLines: true, view: [-180, 80, 180, -60] }, function (u) { return band(u); });
+        function band(u) {
+          return [1, -1].map(function (sg) {
+            const a = sg * cur;
+            return '<rect class="lt-mband" x="-180" y="' + (-(a + 5)) + '" width="360" height="10"/>';
+          }).join("") + '<text class="lt-mt" x="-176" y="' + (-(cur + 6)) + '" font-size="' + (3.6 * u).toFixed(2) + '">' + cur + '°N</text>';
+        }
+        function set(v) {
+          cur = v; inp.value = v;
+          fig.querySelector(".p2-sl-v").textContent = Math.round(v) + "° (±5°)";
+          const inBand = ALL.filter(function (c) { return Math.abs(Math.abs(c.lat) - v) <= 5; });
+          svg.querySelectorAll(".lt-dot").forEach(function (d) { d.classList.toggle("dim", Math.abs(+d.dataset.lat - v) > 5); });
+          const b = svg.querySelector(".lt-band");
+          b.setAttribute("x", F.x(Math.max(0, v - 5)).toFixed(1)); b.setAttribute("width", (F.x(Math.min(90, v + 5)) - F.x(Math.max(0, v - 5))).toFixed(1));
+          m.draw(band);
+          const avg = inBand.length ? U.mean(inBand.map(function (c) { return U.mean(c.t); })) : null;
+          const names = inBand.slice().sort(function (a, c) { return Math.abs(a.lat) - Math.abs(c.lat); }).slice(0, 4).map(function (c) { return c.kr; }).join(" · ");
+          fig.querySelector(".lt-read").innerHTML = K.big("위도대", Math.round(v) + "° ± 5°", "남·북반구 함께") +
+            K.big("평균 연평균 기온", avg === null ? "—" : U.deg(avg), inBand.length + "개 도시", avg === null ? "" : avg < 5 ? "cold" : "warm") +
+            K.big("이 위도대 도시", names || "없음", "", "key");
+        }
+        inp.addEventListener("input", function () { stop(); pl.pause(); set(+inp.value); });
+        const LV = [0, 20, 40, 60, 75];
+        const pl = K.player(fig, ".lt-ctl", ["적도 0°", "20°", "40°", "60°", "75°"], function (k) {
+          stop(); stop = K.tween(cur, LV[k], 1000, function (v) { set(Math.round(v)); });
+        }, { interval: 2200 });
+        svg.addEventListener("click", function (e) { const d = e.target.closest(".lt-dot"); if (d) { stop(); pl.pause(); set(Math.round(+d.dataset.lat)); } });
+        return function () { stop(); pl.pause(); };
+      }
+    };
+  };
+
+  /* 계절풍 ② 영향 — 달마다 재생: 바람 방향 · 강수 막대 */
+  const MON_WIND = [0, 0, 0, 2, 1, 1, 1, 1, 1, 2, 0, 0];      // 0 겨울 계절풍 · 1 여름 계절풍 · 2 바뀌는 시기
+  P2F.monEffect = function () {
+    const list = [C("Seoul"), C("Mumbai")];
+    return {
+      html: '<div class="p2-ctl me-ctl">' + K.seg("city", ["서울", "뭄바이"], 0) + '</div><div class="p2-ctl me-play"></div>' +
+        '<div class="p2-readout me-t"></div>' +
+        '<div class="tr-two"><div class="p2-mapbox muted" data-map="me"></div><div class="p2-figwrap me-c"></div></div>' +
+        K.cap("여름 계절풍(바다 → 대륙) 시기에 강수 집중, 겨울 계절풍(대륙 → 바다) 시기에는 건조"),
+      init: function (fig) {
+        let ci = 0, mon = 6;
+        const m = K.makeMap(fig.querySelector('[data-map="me"]'), { legend: false, info: false, view: [55, 60, 170, -8],
+          cities: [{ id: "Seoul", emph: true }, { id: "Mumbai", emph: true }] }, function (u) { return K.monsoonSvg(u, false); });
+        function show() {
+          const c = list[ci], w = MON_WIND[mon];
+          m.draw(function (u) { return w === 2 ? "" : K.monsoonSvg(u, w === 0); });
+          fig.querySelector(".me-c").innerHTML = K.chart({ cities: [c], show: "p", mark: [mon], label: c.kr + " 월 강수량" });
+          fig.querySelector(".me-t").innerHTML = "<b>" + (mon + 1) + "월</b> · " + (w === 1 ? "여름 계절풍 — 바다 → 대륙, 습함" : w === 0 ? "겨울 계절풍 — 대륙 → 바다, 건조" : "계절풍이 바뀌는 시기") +
+            " → " + escHtml(c.kr) + " 강수량 <b>" + U.n0(c.p[mon]) + "mm</b> (연강수량의 " + U.pct(c.p[mon], U.sum(c.p)) + "%)";
+        }
+        K.bindSeg(fig, "city", function (i) { ci = i; show(); });
+        const pl = K.player(fig, ".me-play", K.MON, function (k) { mon = k; show(); }, { interval: 1300, loop: true, start: 6 });
+        const stop = flowDots(fig, ".p2-ov .p2-msn .ga-l", { gap: function (sw) { return sw * 4.5; }, speed: function (sw) { return sw * 4; } });
+        return function () { stop(); pl.pause(); };
+      }
+    };
+  };
+
+  /* ==========================================================
+     3차 시뮬레이터 (2026-09-30) — 강수 계절 · 산곡풍 · 서→동 여행 · 서안/동안 쌍 · 에너지 수지 읽기
+     ========================================================== */
+  const SEASONS = [["봄", [2, 3, 4], "#58b07a"], ["여름", [5, 6, 7], "#e0483a"], ["가을", [8, 9, 10], "#e6a700"], ["겨울", [11, 0, 1], "#2b6fe3"]];
+  function seasonOf(m, south) { const mm = south ? (m + 6) % 12 : m; for (let i = 0; i < 4; i++) if (SEASONS[i][1].indexOf(mm) >= 0) return i; return 0; }
+
+  /* 강수 ③ 연강수량과 강수 계절 — 도시 고르기 · 계절 막대 · 계절 비율 원 · 유형 판정 */
+  P2F.pSeason = function () {
+    const PRE = [C("Singapore"), C("Seoul"), C("Rome")];
+    const opts = CITIES.slice().sort(function (a, b) { return a.kr.localeCompare(b.kr, "ko"); }).map(function (c) { return '<option value="' + c.id + '">' + escHtml(c.kr) + '</option>'; }).join("");
+    function share(c) {
+      const south = c.lat < 0, tot = U.sum(c.p), s = [0, 0, 0, 0];
+      c.p.forEach(function (v, m) { s[seasonOf(m, south)] += v; });
+      return { s: s.map(function (v) { return v / tot; }), tot: tot, south: south };
+    }
+    function kind(sh) {
+      if (sh.tot < 250) return ["연중 건조", "연강수량 250mm 미만 — 사막"];
+      const su = sh.s[1], wi = sh.s[3];
+      if (su >= wi * 2.5 && su >= 0.4) return ["여름 집중", "여름 " + Math.round(su * 100) + "% · 겨울 " + Math.round(wi * 100) + "% — 계절풍 · 우기"];
+      if (wi >= su * 2.5) return ["여름 건조", "여름 " + Math.round(su * 100) + "% · 겨울 " + Math.round(wi * 100) + "% — 겨울에 비(지중해성)"];
+      if (Math.max.apply(null, sh.s) < 0.33) return ["연중 고름", "어느 계절에나 비슷하게 내림"];
+      const i = sh.s.indexOf(Math.max.apply(null, sh.s));
+      return [SEASONS[i][0] + "에 많음", SEASONS[i][0] + " 강수 " + Math.round(sh.s[i] * 100) + "%"];
+    }
+    function bars(c, sh) {
+      const W = 620, H = 330, L = 50, R = 16, T = 30, B = 42, cw = (W - L - R) / 12, mx = Math.max(100, Math.ceil(U.maxOf(c.p) / 100) * 100);
+      const y = function (v) { return H - B - v / mx * (H - T - B); };
+      let s = K.svgOpen(W, H, c.kr + " 월 강수량", "ps-svg");
+      for (let v = 0; v <= mx; v += mx / 4) s += '<line class="p2-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="p2-ax" x="' + (L - 6) + '" y="' + (y(v) + 5) + '" text-anchor="end">' + Math.round(v) + '</text>';
+      s += '<text class="p2-unit" x="' + (L - 6) + '" y="' + (T - 10) + '" text-anchor="end">mm</text>';
+      c.p.forEach(function (v, m) {
+        const si = seasonOf(m, sh.south), h = H - B - y(v);
+        s += '<rect class="ps-bar" style="--i:' + m + ';fill:' + SEASONS[si][2] + '" x="' + (L + m * cw + cw * .14).toFixed(1) + '" y="' + y(v).toFixed(1) + '" width="' + (cw * .72).toFixed(1) + '" height="' + Math.max(1, h).toFixed(1) + '" rx="3"/>' +
+          '<text class="p2-mon" x="' + (L + m * cw + cw / 2).toFixed(1) + '" y="' + (H - B + 22) + '" text-anchor="middle">' + (m + 1) + '</text>';
+      });
+      return s + '<line class="p2-base" x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '"/></svg>';
+    }
+    function ring(sh) {
+      const R = 92, r = 56, cx = 120, cy = 120;
+      let a0 = -Math.PI / 2, s = '<svg class="p2-svg ps-ring" viewBox="0 0 240 240" role="img" aria-label="계절별 강수 비율">';
+      sh.s.forEach(function (f, i) {
+        const a1 = a0 + f * Math.PI * 2, big = f > .5 ? 1 : 0;
+        const p = function (rr, a) { return (cx + rr * Math.cos(a)).toFixed(1) + " " + (cy + rr * Math.sin(a)).toFixed(1); };
+        if (f > 0.002) s += '<path d="M' + p(R, a0) + ' A' + R + ' ' + R + ' 0 ' + big + ' 1 ' + p(R, a1) + ' L' + p(r, a1) + ' A' + r + ' ' + r + ' 0 ' + big + ' 0 ' + p(r, a0) + ' Z" fill="' + SEASONS[i][2] + '"/>';
+        const am = (a0 + a1) / 2;
+        if (f >= .08) s += '<text class="ps-rt" x="' + (cx + (R + r) / 2 * Math.cos(am)).toFixed(1) + '" y="' + (cy + (R + r) / 2 * Math.sin(am) + 5).toFixed(1) + '" text-anchor="middle">' + Math.round(f * 100) + '%</text>';
+        a0 = a1;
+      });
+      return s + '<text class="ps-rc" x="120" y="116" text-anchor="middle">' + U.n0(sh.tot) + '</text><text class="ps-rs" x="120" y="138" text-anchor="middle">mm/년</text></svg>';
+    }
+    return {
+      html: '<div class="p2-ctl">' + K.seg("city", ["싱가포르 <small>연중 고름</small>", "서울 <small>여름 집중</small>", "로마 <small>겨울 비</small>"], 1) +
+          '<label class="tr-pick">다른 도시 <select>' + opts + '</select></label></div>' +
+        '<div class="p2-row ps-read"></div>' +
+        '<div class="tr-two ps-two"><div class="p2-figwrap ps-b"></div><div class="ps-side"><div class="ps-rw"></div>' +
+          '<div class="ps-keys">' + SEASONS.map(function (x) { return '<span style="--sc:' + x[2] + '"><i></i>' + x[0] + '</span>'; }).join("") + '</div><p class="ps-note"></p></div></div>' +
+        K.cap("막대 색 = 계절 · 원 = 계절별 강수 비율 — 연강수량이 같아도 <b>어느 계절에 내리는가</b>에 따라 기후가 다름"),
+      init: function (fig) {
+        const sel = fig.querySelector("select");
+        function show(c) {
+          const sh = share(c), kd = kind(sh);
+          fig.querySelector(".ps-b").innerHTML = bars(c, sh);
+          fig.querySelector(".ps-rw").innerHTML = ring(sh);
+          fig.querySelector(".ps-note").innerHTML = sh.south ? "남반구 도시 — <b>12~2월이 여름</b>, 6~8월이 겨울" : "북반구 도시 — 6~8월 여름, 12~2월 겨울";
+          fig.querySelector(".ps-read").innerHTML = K.big("연강수량", U.n0(sh.tot) + "mm", escHtml(c.kr) + " " + U.latTxt(c), "key") +
+            K.big("여름 비율", Math.round(sh.s[1] * 100) + "%", "", "warm") + K.big("겨울 비율", Math.round(sh.s[3] * 100) + "%", "", "cold") + K.big("강수 유형", kd[0], kd[1], "rain");
+          sel.value = c.id;
+        }
+        K.bindSeg(fig, "city", function (i) { show(PRE[i]); });
+        sel.addEventListener("change", function () { fig.querySelectorAll('[data-seg="city"] .p2-sb').forEach(function (b) { b.classList.remove("on"); }); show(C(sel.value)); });
+        show(PRE[1]);
+      }
+    };
+  };
+
+  /* 바람 ③ 여러 규모의 바람 — 해륙풍 + 산곡풍, 낮 ↔ 밤 */
+  function valleyScene(night) {
+    const g = 300;
+    let s = K.svgOpen(600, 330, night ? "산곡풍 — 밤: 산바람" : "산곡풍 — 낮: 골바람", "vb-svg") +
+      '<rect class="p2-sky' + (night ? " night" : "") + '" x="0" y="0" width="600" height="' + g + '"/>' +
+      (night ? '<circle class="p2-moon" cx="520" cy="52" r="20"/>' : '<g class="ls-sunwrap"><circle cx="80" cy="56" r="40" fill="url(#p2g-glow)"/><circle cx="80" cy="56" r="20" fill="url(#p2g-sun)"/></g>') +
+      '<polygon class="p2-mtn" points="0,90 90,70 300,' + (g - 10) + ' 510,70 600,90 600,' + (g + 30) + ' 0,' + (g + 30) + '"/>' +
+      '<rect class="p2-grass" x="220" y="' + (g - 14) + '" width="160" height="44"/>';
+    const up = [[270, g - 26, 110, 110], [330, g - 26, 490, 110]];
+    up.forEach(function (p) {
+      const a = night ? [p[2], p[3], p[0], p[1]] : p;
+      s += '<path class="vb-flow" d="M' + a[0] + ' ' + a[1] + ' L' + a[2] + ' ' + a[3] + '" stroke-width="7"/>' + K.ar(a[0], a[1], a[2], a[3], "p2-arrow" + (night ? "" : " warm"), 6);
+    });
+    return s + '<text class="p2-lbl" x="300" y="' + (g - 40) + '" text-anchor="middle">골짜기</text>' +
+      '<text class="p2-lbl" x="300" y="44" text-anchor="middle">' + (night ? "산바람 — 산 → 골짜기" : "골바람 — 골짜기 → 산") + '</text>' +
+      '<text class="p2-lbl sm" x="300" y="70" text-anchor="middle">' + (night ? "산비탈이 빨리 식음 → 찬 공기가 비탈을 따라 내려옴" : "햇빛 받은 산비탈이 빨리 데워짐 → 공기가 비탈을 따라 올라감") + '</text></svg>';
+  }
+  P2F.wScale = function () {
+    const f = origWScale();
+    return {
+      html: f.html.replace('<div class="p2-ctl day-ctl"></div>', K.seg("scale", ["🌊 해륙풍", "⛰️ 산곡풍"], 0) + '<div class="p2-ctl day-ctl"></div>'),
+      init: function (fig) {
+        const sc = fig.querySelector(".p2-scene");
+        let kind = 0, night = false;
+        function addLoop() {
+          const svg = sc.querySelector("svg");
+          if (kind || !svg || svg.querySelector(".sb-loop")) return;
+          const nt = /밤/.test(svg.getAttribute("aria-label"));
+          const d = nt ? "M140 225 L460 225 L490 205 L490 115 L460 95 L140 95 L110 115 L110 205 Z" : "M460 225 L140 225 L110 205 L110 115 L140 95 L460 95 L490 115 L490 205 Z";
+          svg.insertBefore(el("path", { d: d, class: "sb-loop", "stroke-width": "6" }), svg.firstChild.nextSibling);
+        }
+        function draw() { sc.innerHTML = kind ? valleyScene(night) : K.seaBreeze(night); addLoop(); }
+        const pl = K.player(fig, ".day-ctl", ["☀️ 낮", "🌙 밤"], function (i) { night = i === 1; draw(); }, { interval: 3200, loop: true });
+        K.bindSeg(fig, "scale", function (i) { kind = i; draw(); });
+        const stop = flowDots(sc, ".sb-loop, .vb-flow", { r: 5, gap: function () { return 50; }, speed: function () { return 110; } });
+        return function () { stop(); pl.pause(); };
+      }
+    };
+  };
+
+  /* 수륙 분포 ② 대륙성 기후와 해양성 기후 — 50°N 부근 서쪽 해안 → 대륙 내부 → 동쪽 해안 여행 */
+  const TRIP = ["Dublin", "London", "Berlin", "Moscow", "Ulaanbaatar", "Khabarovsk"];
+  P2F.lsContinental = function () {
+    const cs = TRIP.map(C), lo = -30, hi = 30;
+    function chart(k) {
+      const W = 900, H = 300, L = 50, R = 16, T = 20, cB = 150, bT = 196, bB = 270;
+      const cw = (W - L - R) / 12, xm = function (m) { return L + m * cw + cw / 2; }, y = function (v) { return T + (hi - v) / (hi - lo) * (cB - T); };
+      let s = K.svgOpen(W, H, "서쪽에서 동쪽으로 — 기온 변화", "trip-svg");
+      for (let v = lo; v <= hi; v += 10) s += '<line class="p2-grid' + (v === 0 ? " zero" : "") + '" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="p2-ax" x="' + (L - 6) + '" y="' + (y(v) + 5) + '" text-anchor="end">' + v + '</text>';
+      s += '<text class="p2-unit" x="' + (L - 6) + '" y="' + (T - 6) + '" text-anchor="end">℃</text>';
+      for (let m = 0; m < 12; m += 1) s += '<text class="p2-mon" x="' + xm(m) + '" y="' + (cB + 18) + '" text-anchor="middle">' + (m + 1) + '</text>';
+      cs.forEach(function (c, i) {
+        if (i > k) return;
+        s += '<polyline class="trip-l' + (i === k ? " now" : "") + '" style="--tc:' + tColor(40 - U.maxOf(c.t) + U.minOf(c.t) - 10) + '" points="' + c.t.map(function (v, m) { return xm(m) + "," + y(v).toFixed(1); }).join(" ") + '"/>';
+      });
+      const bw = (W - L - R) / cs.length, mx = 45;
+      cs.forEach(function (c, i) {
+        const rg = range(c), h = rg / mx * (bB - bT), x = L + i * bw + bw * .18;
+        s += '<g class="trip-b' + (i > k ? " off" : i === k ? " now" : "") + '"><rect x="' + x.toFixed(1) + '" y="' + (bB - h).toFixed(1) + '" width="' + (bw * .64).toFixed(1) + '" height="' + h.toFixed(1) + '" rx="5" style="fill:' + tColor(rg - 12) + '"/>' +
+          '<text class="trip-bv" x="' + (x + bw * .32).toFixed(1) + '" y="' + (bB - h - 6).toFixed(1) + '" text-anchor="middle">' + U.n1(rg) + '</text>' +
+          '<text class="trip-bn" x="' + (x + bw * .32).toFixed(1) + '" y="' + (bB + 16) + '" text-anchor="middle">' + escHtml(c.kr) + '</text></g>';
+      });
+      return s + '<text class="p2-lbl sm" x="' + L + '" y="' + (bT - 8) + '">기온의 연교차(℃)</text><line class="p2-base" x1="' + L + '" x2="' + (W - R) + '" y1="' + bB + '" y2="' + bB + '"/></svg>';
+    }
+    function route(u, k) {
+      let s = '<polyline class="trip-route" points="' + cs.map(function (c) { return c.lon + "," + (-c.lat); }).join(" ") + '" stroke-width="' + (0.6 * u).toFixed(2) + '"/>';
+      cs.forEach(function (c, i) {
+        s += '<circle class="trip-pt' + (i === k ? " now" : i < k ? " done" : "") + '" cx="' + c.lon + '" cy="' + (-c.lat) + '" r="' + ((i === k ? 2.2 : 1.4) * u).toFixed(2) + '"/>' +
+          (i === k ? K.geoText(c.lon, c.lat + 3.2 * u, escHtml(c.kr), u, "trip-t", "middle", 4) : "");
+      });
+      return s;
+    }
+    const why = ["대서양 바로 옆 — 편서풍이 바다 공기를 실어 옴 → 연교차 가장 작음", "바다와 가까움 — 겨울 온화", "바다에서 멀어짐 — 겨울이 추워지기 시작", "대륙 깊숙이 — 여름 덥고 겨울 매우 추움", "대륙 한가운데(고원) — 연교차 최대 수준, 강수도 적음", "대륙 동쪽 해안 — 바다 옆이지만 겨울에 대륙의 찬 바람(계절풍) → 연교차 큼"];
+    return {
+      html: '<div class="p2-ctl trip-ctl"></div><div class="p2-readout trip-t"></div>' +
+        '<div class="tr-two rows"><div class="p2-mapbox muted" data-map="trip"></div><div class="p2-figwrap">' + chart(0) + '</div></div>' +
+        K.cap("비슷한 위도(약 48°~55°N)를 서쪽 해안에서 동쪽으로 — 바다에서 멀수록 <b>대륙성</b>(연교차 큼), 바다 가까운 서안은 <b>해양성</b>(연교차 작음)"),
+      init: function (fig) {
+        let k = 0;
+        const m = K.makeMap(fig.querySelector('[data-map="trip"]'), { legend: false, info: false, view: [-20, 68, 150, 30], latLines: true }, function (u) { return route(u, k); });
+        const pl = K.player(fig, ".trip-ctl", cs.map(function (c) { return c.kr; }), function (i) {
+          k = i;
+          m.draw(function (u) { return route(u, k); });
+          fig.querySelector(".tr-two .p2-figwrap").innerHTML = chart(k);
+          const c = cs[i];
+          fig.querySelector(".trip-t").innerHTML = "<b>" + escHtml(c.kr) + "</b> (" + U.latTxt(c) + ") · 1월 " + U.deg(c.t[0]) + " · 7월 " + U.deg(c.t[6]) + " · 연교차 <b>" + U.n1(range(c)) + "℃</b> — " + why[i];
+        }, { interval: 2400 });
+        return function () { pl.pause(); };
+      }
+    };
+  };
+
+  /* 수륙 분포 ③ 대륙 서안과 동안 — 같은 위도의 서안 · 동안 도시 쌍 + 편서풍 */
+  const PAIRS = [["Lisbon", "Seoul", "유라시아"], ["London", "Khabarovsk", "유라시아"], ["San_Francisco", "New_York", "북아메리카"], ["Vancouver", "Quebec", "북아메리카"]];
+  P2F.lsWestEast = function () {
+    function over(u, i) {
+      const a = C(PAIRS[i][0]), b = C(PAIRS[i][1]), lat = (a.lat + b.lat) / 2;
+      let s = "";
+      [[a.lon - 38, a.lon - 4], [a.lon + 6, a.lon + 40]].forEach(function (seg, j) {
+        s += K.geoArrow([[seg[0], lat + 3], [(seg[0] + seg[1]) / 2, lat + 4], [seg[1], lat + 3]], u, "p2-msn we-ar" + (j ? " land" : ""), 1.6, true);
+      });
+      s += K.geoText(a.lon - 22, lat + 8, "편서풍", u, "we-t", "middle", 3.4);
+      [[a, "서안"], [b, "동안"]].forEach(function (x) {
+        s += '<circle class="we-pt ' + (x[1] === "서안" ? "w" : "e") + '" cx="' + x[0].lon + '" cy="' + (-x[0].lat) + '" r="' + (1.9 * u).toFixed(2) + '"/>' +
+          K.geoText(x[0].lon, x[0].lat - 5, escHtml(x[0].kr) + " (" + x[1] + ")", u, "we-t2", "middle", 3.4);
+      });
+      return s;
+    }
+    function body(i) {
+      const a = C(PAIRS[i][0]), b = C(PAIRS[i][1]);
+      return '<div class="p2-row">' + K.big(escHtml(a.kr) + " <small>서안 · " + U.latTxt(a) + "</small>", U.n1(range(a)) + "℃", "연교차 · 1월 " + U.deg(a.t[0]), "c1") +
+        K.big(escHtml(b.kr) + " <small>동안 · " + U.latTxt(b) + "</small>", U.n1(range(b)) + "℃", "연교차 · 1월 " + U.deg(b.t[0]), "c2") + '</div>';
+    }
+    return {
+      html: K.seg("pair", PAIRS.map(function (p) { return escHtml(C(p[0]).kr) + " · " + escHtml(C(p[1]).kr); }), 0) + '<div class="we-read">' + body(0) + '</div>' +
+        '<div class="tr-two rows"><div class="p2-mapbox muted" data-map="we"></div><div class="p2-figwrap we-c"></div></div>' +
+        K.cap("중위도에서는 편서풍이 바다 → 대륙 서안으로 붊 → 서안은 겨울이 온화하고 연교차가 작음, 동안은 대륙을 지나온 바람의 영향으로 연교차가 큼"),
+      init: function (fig) {
+        let i = 0;
+        const m = K.makeMap(fig.querySelector('[data-map="we"]'), { legend: false, info: false, view: [-180, 75, 180, 10], latLines: true }, function (u) { return over(u, i); });
+        function show(k) {
+          i = k;
+          const a = C(PAIRS[k][0]), b = C(PAIRS[k][1]);
+          const lat = (a.lat + b.lat) / 2;
+          m.draw(function () { return ""; });
+          m.zoomTo([a.lon - 48, lat + 20, b.lon + 22, lat - 16], REDUCED ? 0 : 650);
+          setTimeout(function () { if (i === k) m.draw(function (u) { return over(u, i); }); }, REDUCED ? 0 : 720);
+          fig.querySelector(".we-read").innerHTML = body(k);
+          fig.querySelector(".we-c").innerHTML = K.chart({ cities: [a, b], show: "t", range: true, label: a.kr + "와 " + b.kr + " 월평균 기온" });
+        }
+        K.bindSeg(fig, "pair", show);
+        show(0);
+        return flowDots(fig, ".p2-ov .we-ar .ga-l", { gap: function (sw) { return sw * 4.5; }, speed: function (sw) { return sw * 4; } });
+      }
+    };
+  };
+
+  /* 위도 ③ 에너지 과잉·부족 — 위도 막대로 흡수 · 방출 에너지 읽기 */
+  const budgetWrap = P2F.latBudget;
+  P2F.latBudget = function () {
+    const f = budgetWrap();
+    const W = 600, H = 330, L = 50, R = 20, T = 40, B = 46;
+    const x = function (lat) { return L + (lat + 90) / 180 * (W - L - R); };
+    const y = function (v) { return T + (340 - v) / 320 * (H - T - B); };
+    const inc = function (lat) { const c = Math.cos(lat * Math.PI / 180); return 40 + 280 * c * c; };
+    const out = function (lat) { const c = Math.cos(lat * Math.PI / 180); return 130 + 110 * c; };
+    return {
+      html: '<div class="p2-slider"><label for="p2-bud">위도</label><input type="range" id="p2-bud" min="-90" max="90" step="1" value="0"><span class="p2-sl-v"></span></div>' +
+        '<div class="p2-row bud-read"></div>' + f.html,
+      init: function (fig) {
+        const svg = fig.querySelector(".p2-svg"), inp = fig.querySelector("#p2-bud");
+        const g = el("g", { class: "bud-mk" });
+        g.innerHTML = '<line class="bud-line" y1="' + T + '" y2="' + (H - B) + '"/><circle class="bud-in" r="7"/><circle class="bud-out" r="7"/><line class="bud-gap"/>';
+        svg.appendChild(g);
+        function set(lat) {
+          const a = inc(lat), b = out(lat), d = a - b, X = x(lat);
+          g.querySelector(".bud-line").setAttribute("x1", X); g.querySelector(".bud-line").setAttribute("x2", X);
+          g.querySelector(".bud-in").setAttribute("cx", X); g.querySelector(".bud-in").setAttribute("cy", y(a));
+          g.querySelector(".bud-out").setAttribute("cx", X); g.querySelector(".bud-out").setAttribute("cy", y(b));
+          const gp = g.querySelector(".bud-gap");
+          gp.setAttribute("x1", X); gp.setAttribute("x2", X); gp.setAttribute("y1", y(a)); gp.setAttribute("y2", y(b));
+          gp.setAttribute("class", "bud-gap " + (d >= 0 ? "sur" : "def"));
+          fig.querySelector(".p2-sl-v").textContent = lat === 0 ? "적도" : Math.abs(lat) + "°" + (lat > 0 ? "N" : "S");
+          fig.querySelector(".bud-read").innerHTML = K.big("흡수하는 태양 에너지", Math.round(a), "상대값") + K.big("내보내는 에너지", Math.round(b), "상대값") +
+            K.big(d >= 0 ? "에너지 과잉" : "에너지 부족", (d >= 0 ? "+" : "−") + Math.abs(Math.round(d)), d >= 0 ? "남는 열 → 고위도로 이동" : "모자란 열 → 저위도에서 받아옴", d >= 0 ? "warm" : "cold");
+        }
+        inp.addEventListener("input", function () { set(+inp.value); });
+        set(0);
+        return f.init ? f.init(fig) : null;
+      }
+    };
+  };
+
+  /* ==========================================================
+     4차 시뮬레이터 (2026-09-30) — 바다 위 공기 덩어리 · 계절풍 만들기
+     ========================================================== */
+  /* 해류 ④ 바다 위 공기 — 난류 위(불안정: 상승 · 구름 · 비) vs 한류 위(안정: 안개 · 비 없음) */
+  P2F.curAir = function () {
+    function panel(k, x0) {
+      const warm = k === "w";
+      return '<g class="ca2 ' + k + '" transform="translate(' + x0 + ' 0)"><rect class="ca2-sky" x="4" y="4" width="312" height="236" rx="14"/>' +
+        '<rect class="ca2-sea ' + k + '" x="4" y="240" width="' + (warm ? 312 : 200) + '" height="60"/>' +
+        (warm ? "" : '<rect class="ca2-desert" x="204" y="232" width="112" height="68"/><text class="p2-lbl sm" x="260" y="290" text-anchor="middle">해안 사막</text>') +
+        '<g class="ca2-waves">' + [30, 110, 190].map(function (x) { return '<path d="M' + x + ' 262 q12 -7 24 0 t24 0"/>'; }).join("") + '</g>' +
+        '<text class="ca2-t" x="' + (warm ? 160 : 104) + '" y="286" text-anchor="middle">' + (warm ? "난류 · 바다 약 24℃" : "한류 · 바다 약 14℃") + '</text>' +
+        (warm ? '<g class="ca2-cloud">' + K.cloud(160, 70, 1.2, "p2-cloud dark") + '</g><g class="ca2-rain">' + K.rain(120, 92, 90, 130, 8) + '</g>'
+              : '<rect class="ca2-fog" x="4" y="170" width="200" height="70"/><text class="p2-lbl sm ca2-fogt" x="104" y="190" text-anchor="middle">안개 · 낮은 구름</text>') +
+        '<text class="p2-lbl ca2-h" x="160" y="30" text-anchor="middle">' + (warm ? "따뜻한 바다 위 — 공기가 올라감" : "차가운 바다 위 — 공기가 눌러앉음") + '</text>' +
+        (warm ? K.ar(292, 220, 292, 60, "p2-arrow warm", 5) : K.ar(20, 150, 180, 150, "p2-arrow faint", 4)) + '<g class="ca2-parts"></g></g>';
+    }
+    const s = '<svg class="p2-svg ca2-svg" viewBox="0 0 640 310" role="img" aria-label="난류 위와 한류 위의 공기">' + panel("w", 0) + panel("c", 320) + '</svg>';
+    return {
+      html: '<div class="p2-ctl ca2-ctl"><button type="button" class="anim-btn ca2-play on">⏸ 멈춤</button></div>' +
+        '<div class="p2-row">' + K.big("난류 위의 공기", "불안정", "아래가 따뜻함 → 상승 → 구름 · 비", "warm") + K.big("한류 위의 공기", "안정", "아래가 차가움 → 상승 못 함 → 비 적음", "cold") + '</div>' +
+        '<div class="p2-figwrap">' + s + '</div>' +
+        K.cap("공기 알갱이의 움직임 (예시 모형) — 난류 연안: 따뜻하고 습함 · 한류 연안: 서늘하고 건조, 안개 잦음 (아타카마 · 나미브 사막)"),
+      init: function (fig) {
+        const svg = fig.querySelector(".ca2-svg");
+        let run = true;
+        const P = { w: [], c: [] };
+        ["w", "c"].forEach(function (k) {
+          const g = svg.querySelector(".ca2." + k + " .ca2-parts");
+          for (let i = 0; i < 14; i++) {
+            const c = el("circle", { r: "6" }); g.appendChild(c);
+            P[k].push({ e: c, x: 20 + Math.random() * 280, y: 150 + Math.random() * 80, v: 20 + Math.random() * 30, ph: Math.random() * 6 });
+          }
+        });
+        fig.querySelector(".ca2-play").addEventListener("click", function () { run = !run; this.classList.toggle("on", run); this.textContent = run ? "⏸ 멈춤" : "▶ 재생"; });
+        return loop(svg, function (t, dt) {
+          if (!run) return;
+          P.w.forEach(function (p) {                        // 난류: 데워져 위로 올라가다 구름 높이에서 흩어짐
+            p.y -= p.v * dt * 1.6; p.x += Math.sin(t * 2 + p.ph) * .4;
+            if (p.y < 70) { p.y = 232; p.x = 20 + Math.random() * 280; }
+            p.e.setAttribute("cx", p.x.toFixed(1)); p.e.setAttribute("cy", p.y.toFixed(1));
+            p.e.setAttribute("fill", tColor(24 - (232 - p.y) / 12));
+          });
+          P.c.forEach(function (p) {                        // 한류: 아래에 머물며 옆으로만 흐름
+            p.x += p.v * dt * .8; p.y = 216 + Math.sin(t + p.ph) * 14;
+            if (p.x > 300) p.x = 10;
+            p.e.setAttribute("cx", p.x.toFixed(1)); p.e.setAttribute("cy", p.y.toFixed(1));
+            p.e.setAttribute("fill", tColor(15 + Math.sin(p.ph) * 2));
+          });
+        });
+      }
+    };
+  };
+
+  /* 계절풍 ③ 계절풍 만들기 — 대륙 · 바다 기온을 바꾸면 기압과 바람이 바뀜 */
+  P2F.monMake = function () {
+    const s = K.svgOpen(640, 330, "대륙과 바다의 기온과 계절풍", "mm-svg") +
+      '<rect class="p2-sky" x="0" y="0" width="640" height="250"/>' +
+      '<rect class="mm-land" x="0" y="250" width="320" height="80"/><rect class="p2-seab" x="320" y="250" width="320" height="80"/>' +
+      '<text class="p2-lbl" x="160" y="300" text-anchor="middle">대륙</text><text class="p2-lbl" x="480" y="300" text-anchor="middle">바다</text>' +
+      '<g class="mm-col l"><rect x="60" y="112" width="200" height="118" rx="16"/><text class="p2-hl" x="160" y="178" text-anchor="middle"></text><text class="p2-lbl sm mm-tt" x="160" y="214" text-anchor="middle"></text></g>' +
+      '<g class="mm-col s"><rect x="380" y="112" width="200" height="118" rx="16"/><text class="p2-hl" x="480" y="178" text-anchor="middle"></text><text class="p2-lbl sm mm-tt" x="480" y="214" text-anchor="middle"></text></g>' +
+      '<g class="mm-ar"></g><g class="mm-parts"></g><g class="mm-rain">' + K.cloud(160, 50, .8, "p2-cloud dark") + K.rain(122, 70, 76, 34, 6) + '</g>' +
+      '<text class="p2-lbl mm-wt" x="420" y="40" text-anchor="middle"></text>' +
+    '</svg>';
+    return {
+      html: '<div class="wp-sliders">' +
+          '<div class="p2-slider"><label for="mm-l">대륙 기온</label><input type="range" id="mm-l" data-k="l" min="-25" max="40" step="1" value="32"><span class="p2-sl-v mm-vl"></span></div>' +
+          '<div class="p2-slider"><label for="mm-s">바다 기온</label><input type="range" id="mm-s" data-k="s" min="0" max="30" step="1" value="25"><span class="p2-sl-v mm-vs"></span></div></div>' +
+        '<div class="p2-ctl">' + K.seg("mpre", ["☀️ 여름 예시", "❄️ 겨울 예시"], 0) + '</div>' +
+        '<div class="p2-row mm-read"></div>' +
+        '<div class="p2-figwrap">' + s + '</div>' +
+        K.cap("더 따뜻한 쪽 = 공기가 올라가 저기압, 더 차가운 쪽 = 공기가 내려와 고기압 → 바람은 고기압에서 저기압으로 (예시 모형)"),
+      init: function (fig) {
+        const svg = fig.querySelector(".mm-svg");
+        let L = 32, S = 25, parts = [];
+        const box = svg.querySelector(".mm-parts");
+        function set() {
+          fig.querySelector("#mm-l").value = L; fig.querySelector("#mm-s").value = S;
+          const sg = function (v) { return (v < 0 ? "−" + -v : v) + "℃"; };
+          fig.querySelector(".mm-vl").textContent = sg(L); fig.querySelector(".mm-vs").textContent = sg(S);
+          const d = L - S, dir = d > 0.5 ? -1 : d < -0.5 ? 1 : 0;            // -1: 바다 → 대륙, +1: 대륙 → 바다
+          [["l", L, d > 0.5], ["s", S, d < -0.5]].forEach(function (x) {
+            const g = svg.querySelector(".mm-col." + x[0]), hot = x[2], cold = !hot && Math.abs(d) > 0.5;
+            g.classList.toggle("low", hot); g.classList.toggle("high", cold);
+            g.querySelector(".p2-hl").textContent = hot ? "저" : cold ? "고" : "=";
+            g.querySelector(".mm-tt").textContent = sg(x[1]) + " · " + (hot ? "공기 상승" : cold ? "공기 하강" : "");
+            g.querySelector("rect").style.fill = tColor(x[1]);
+          });
+          svg.querySelector(".mm-land").style.fill = tColor(L);
+          svg.querySelector(".mm-ar").innerHTML = dir ? K.ar(dir < 0 ? 470 : 170, 236, dir < 0 ? 170 : 470, 236, "p2-arrow wind", 4 + Math.min(16, Math.abs(d) * .6)) : "";
+          const wet = dir < 0;
+          svg.querySelector(".mm-rain").style.opacity = wet && Math.abs(d) > 3 ? 1 : 0;
+          svg.querySelector(".mm-wt").textContent = dir ? (wet ? "바다 → 대륙: 습한 바람 → 대륙에 비" : "대륙 → 바다: 차고 건조한 바람") : "기온이 같음 → 바람 약함";
+          fig.querySelector(".mm-read").innerHTML = K.big("기온 차 (대륙 − 바다)", (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d) + "℃", "", "key") +
+            K.big("바람 방향", dir ? (wet ? "바다 → 대륙" : "대륙 → 바다") : "거의 없음", dir ? (wet ? "여름 계절풍과 같은 방향" : "겨울 계절풍과 같은 방향") : "", wet ? "rain" : "cold") +
+            K.big("바람의 성질", dir ? (wet ? "습함 · 비" : "건조 · 한랭") : "—", "");
+          const want = Math.min(22, Math.round(Math.abs(d) * .8));
+          while (parts.length < want) { const c = el("circle", { r: "5" }); box.appendChild(c); parts.push({ e: c, x: 170 + Math.random() * 300, y: 222 + Math.random() * 26 }); }
+          while (parts.length > want) parts.pop().e.remove();
+          svg.dataset.dir = dir; svg.dataset.sp = Math.abs(d);
+        }
+        fig.querySelectorAll(".wp-sliders input").forEach(function (inp) {
+          inp.addEventListener("input", function () { if (inp.dataset.k === "l") L = +inp.value; else S = +inp.value; fig.querySelectorAll('[data-seg="mpre"] .p2-sb').forEach(function (b) { b.classList.remove("on"); }); set(); });
+        });
+        K.bindSeg(fig, "mpre", function (i) { if (i) { L = -15; S = 8; } else { L = 32; S = 25; } set(); });
+        set();
+        return loop(svg, function (t, dt) {
+          const dir = +svg.dataset.dir, sp = +svg.dataset.sp;
+          parts.forEach(function (p) {
+            p.x += dir * (50 + sp * 5) * dt;
+            if (p.x > 470) p.x = 170; if (p.x < 170) p.x = 470;
+            p.e.setAttribute("cx", p.x.toFixed(1)); p.e.setAttribute("cy", p.y.toFixed(1));
+            p.e.setAttribute("fill", dir < 0 ? "#7fb2e8" : "#d9c6a4");
+          });
+        });
       }
     };
   };

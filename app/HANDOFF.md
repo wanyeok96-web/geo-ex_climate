@@ -34,11 +34,19 @@ ui/anim.js          Anim — 단계 애니메이션 재생기(player: ▶ 재생
 ui/modal.js         Modal — 상세 모달(open · close · isOpen, Esc·바깥 누르기로 닫기)
 ui/photo.js         Photo — 사진 카드(html · has · open, 누르면 크게 보기). PHOTOS에 없는 키는 빈 문자열
 ui/slides.js        Slides · CHAPTER_CONTENT — 슬라이드형 블록 틀, chapterChip()
+ui/cover-art.js     CoverArt — 챕터 표지 오른쪽 그림(PART 1 지구본 · 2 기후 요소 · 4 기후 그래프 · 5 주민 생활 삽화 · 6 평가)과 파트 강조색
 chapters/part1.js   PART 1 기후의 이해
 ui/nodes.js · chapters/part2-figs.js · chapters/part2-sims.js · chapters/part2.js   PART 2 (노드형 블록 — 원본 그림 part2-figs.js, 시뮬레이터형 그림 part2-sims.js가 같은 이름으로 바꿔 끼움)
 ui/climgraph.js     ClimGraph — 큰 기후 그래프(표시 켜기·끄기, 기준선, 같은 눈금, start: 시작 달, 그리기 애니메이션 훅)
 chapters/part4.js   PART 4 + JudgeBoard(판별판, PART 6에서도 사용)
+chapters/part4-sims.js  PART 4 시뮬레이터 6개(4-3 그래프 추리 포함) — 블록 제목을 찾아 그 뒤에 끼워 넣음
+chapters/part5-art.js  P5Art — 「식생 · 경관」 사진 없는 카드의 작은 SVG 삽화(토양 단면 · 낮과 밤 · 하얼빈 연교차 등)
+chapters/part5-belt.js  PressureBelt — 기압대의 계절 이동 평면 시뮬레이터(평면 지도 + 위도 단면, 대기대순환 3D와 같은 색), 5-1 · 5-3
 chapters/part5.js   PART 5 — 기후대 챕터 공통 틀 build()
+chapters/part5-sims.js  PART 5 시뮬레이터 8개 — 「분포」 다음(5-2 사막의 원인 · 5-4 영구 동토층은 그 뒤)에 끼워 넣음
+chapters/part5-scenes.js  PART 5 「경관 탐험」 6개 — 기후대별 SVG 경관 삽화 + 번호 누르기 설명 카드, 「식생 · 경관」 다음
+chapters/part5-sims2.js  PART 5 시뮬레이터 2차 6개 — 「경관 탐험」 다음(화전 · 유목 · 농업 달력 · 봄 홍수 · 바다 얼음 · 고도)
+chapters/part1-sims.js  PART 1 시뮬레이터 2개(30년 평균 만들기 · 경선 따라 걷기) — P2F.kit을 쓰므로 part2-sims.js 뒤, 맨 끝 쪽에 불러옴
 chapters/part6.js   PART 6
 chapters/atmos.js   PART 3 — 대기대순환 3D(iframe) 연결
 core/app.js         goPage(): 페이지 이동, 목차·하단 시트·주소·창 제목 갱신
@@ -106,9 +114,9 @@ node tools/check-file.mjs
 ```
 
 - Node 22 이상 + Chrome 또는 Edge 필요. 헤드리스 브라우저로 `index.html`을 **file://로 직접** 열어 점검합니다(약 1분).
-- 점검 항목(60개, 사진 21장 불러오기 · 2차 보강 기능 포함): 앱 시작·목차·이동·주소, PART 3 3D 동기화, PART 1(슬라이드·애니메이션·오늘 기온·지도 분류·범례·함께 풀기·2-2 노드 바로 열기), PART 4(그리는 순서·7월부터·그래프 표시·순서도·기준 실험·판별판), PART 5(블록 틀·기압대 이동·삽화), PART 6(도시 지도·비교 세트·무작위 판별·교실 퀴즈·힌트), 스크립트 오류.
+- 점검 항목(72개, 사진 21장 불러오기 · 2차 보강 기능 포함): 앱 시작·목차·이동·주소, PART 3 3D 동기화, PART 1(슬라이드·애니메이션·오늘 기온·지도 분류·범례·함께 풀기·30년 평균·경선 따라 걷기·2-2 노드 바로 열기), PART 4(그리는 순서·7월부터·그래프 표시·순서도·기준 실험·판별판·그래프 추리), PART 5(블록 틀·기압대 이동·시뮬레이터 14개·경관 탐험 6개·삽화), PART 6(도시 지도·비교 세트·무작위 판별·교실 퀴즈·힌트), 스크립트 오류.
 - 캡처(`tools/shots/`, 저장소에는 올리지 않음 — 점검 때 다시 만들어짐): 제작한 챕터 블록 전부(1920×1080, PART 1·4는 1366×768도) + 4개 화면 × 5개 해상도. 약 5분.
-- PART 2 전용 점검: `node tools/check-part2.mjs` (Cursor 작업, 캡처 `tools/shots-p2/`) — 37개(시뮬레이터 · 도시로 읽는 기후 요인 · 단계 애니메이션·다음 소주제·흐르는 해류·장마 전선 북상·추가 문제 포함).
+- PART 2 전용 점검: `node tools/check-part2.mjs` (Cursor 작업, 캡처 `tools/shots-p2/`) — 47개(계절풍 만들기 · 바다 위의 공기 · 시뮬레이터 · 도시로 읽는 기후 요인 · 단계 애니메이션·다음 소주제·흐르는 해류·장마 전선 북상·추가 문제 포함).
 - 브라우저 도구로 확인할 때는 `python -m http.server`로 `app`을 띄워도 됩니다(file://와 동작 동일).
 
 ## 8. 애니메이션 · 사진 (2026-09-29 보강)
@@ -126,3 +134,5 @@ node tools/check-file.mjs
 - 선생님 확인 사항은 각 `파트기획/PART*.md` 끝 「선생님 확인이 필요한 것」에 모아 둠.
 - 2026-09-29 PART 1 · 2 · 4 · 5 · 6 보강(애니메이션 · 사진 칸 · 추가 블록·문제) 완료 — 사진 21장 내려받아 넣음(assets/photos/, 약 5MB, 목록·출처 data/photos.js · 사용 안내 창 「사진 목록 보기」).
 - 남은 큰 일: 선생님 수정 사항 반영 → 마무리 단계(지오퍼스 기획, 배포).
+
+- 점검이 도중에 끊기면 헤드리스 Chrome이 남아 같은 포트(9340)를 잡고 있을 수 있음 → 다음 점검이 옛 창에 붙어 「앱이 file://에서 시작됨」부터 실패. 작업 관리자에서 `--remote-debugging-port=9340` Chrome을 끄고 다시 실행
