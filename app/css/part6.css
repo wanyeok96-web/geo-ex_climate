@@ -113,3 +113,86 @@
 .cq-tm.now { border-color: var(--ink-2); box-shadow: 0 0 0 3px rgba(57, 65, 85, .15); }
 .cq-turn { margin-left: 12px; font-weight: 900; color: var(--accent-ink); }
 .jh-next { align-self: flex-start; margin-top: 12px; }
+
+/* ============================================================
+   PART 6 업그레이드 (2026-10-01) — 두 도시 비교 · 짝 맞추기 · 판별 기록 · 10문제 도전 · 개념 지도
+   ============================================================ */
+.cmp-body { grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); align-items: stretch; }
+.cmp-graphs { align-items: start; }
+.cmp-body { align-items: start; }
+.cmp-g .cg { flex: none; }
+.cmp-g { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.cmp-g .cg-svg { width: 100%; height: auto; max-height: calc(100vh - 330px); }
+.cmp-h { display: flex; align-items: center; gap: 8px; font-size: .95em; }
+.cmp-h i { width: 14px; height: 14px; border-radius: 4px; } .cmp-h.a i { background: #e8730c; } .cmp-h.b i { background: #2b6fe3; }
+.cmp-h b { font-size: 1.15em; font-weight: 900; } .cmp-h span { color: var(--muted); font-weight: 700; font-size: .85em; }
+.cmp-h em { margin-left: auto; padding: 2px 10px; border-radius: 8px; font-style: normal; font-weight: 900; color: #fff; background: var(--zc); }
+.cmp-right { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.dv { display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); }
+.dv-r { display: grid; grid-template-columns: 4.6em 1fr; align-items: center; gap: 8px; }
+.dv-k { font-size: .82em; font-weight: 900; color: var(--muted); }
+.dv-bars { display: grid; gap: 3px; }
+.dv-b { position: relative; height: 20px; border-radius: 6px; background: var(--panel-2); overflow: hidden; }
+.dv-b i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; transition: width .5s; }
+.dv-b.a i { background: color-mix(in srgb, #e8730c 55%, #fff); } .dv-b.b i { background: color-mix(in srgb, #2b6fe3 50%, #fff); }
+.dv-b b { position: relative; padding-left: 8px; font-size: .78em; font-weight: 900; line-height: 20px; }
+.cmp-auto { display: grid; gap: 6px; padding: 12px 14px; border-radius: 16px; background: #fff8ec; border: 1px solid #f6d6a8; }
+.cmp-at { font-size: .82em; font-weight: 900; color: #b86e00; }
+.cmp-ai { display: flex; gap: 10px; align-items: flex-start; } .cmp-ai > span { font-size: 1.4em; line-height: 1.2; }
+.cmp-ai b { display: block; font-weight: 900; } .cmp-ai small { font-size: .82em; font-weight: 700; color: var(--ink-2); line-height: 1.45; }
+.mt { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.mt-top { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.mt-q { display: flex; align-items: center; gap: 8px; font-size: calc(var(--fs-title) * .78); font-weight: 900; }
+.mt-score { font-weight: 800; color: var(--muted); } .mt-score b { color: var(--ink); }
+.mt-graphs { flex: none; display: grid; align-items: start; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.mt-g { position: relative; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 16px; font: inherit; cursor: pointer; background: var(--panel); border: 3px solid var(--line); transition: border-color .2s, transform .2s; }
+.mt-g svg { width: 100%; height: auto; }
+.mt-g:hover { border-color: #9fb6d8; } .mt-g.sel { border-color: #e8730c; transform: translateY(-3px); box-shadow: var(--shadow); } .mt-g.ok { border-color: #2f8f3a; background: #f1faf2; cursor: default; }
+.mt-n { position: absolute; left: 10px; top: 6px; font-size: 1.3em; font-weight: 900; color: var(--muted); }
+.mt-tag { margin-top: auto; padding: 6px; border-radius: 10px; text-align: center; font-weight: 900; background: var(--panel-2); }
+.mt-g.ok .mt-tag { color: #fff; background: #2f8f3a; }
+.mt-names { flex: none; margin-top: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.mt-nm { padding: 10px 18px; border-radius: 999px; font: inherit; font-size: 1.05em; font-weight: 900; cursor: pointer; background: var(--panel); border: 2px solid var(--line-2); }
+.mt-nm small { font-weight: 700; color: var(--muted); } .mt-nm:hover { border-color: #e8730c; } .mt-nm.used { opacity: .35; cursor: default; text-decoration: line-through; }
+.mt-foot { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mt-fb { flex: 1; font-weight: 900; } .mt-fb.ok { color: #2f8f3a; } .mt-fb.no { color: #d0402f; }
+.jlog { margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); }
+.jlog-t { font-weight: 900; } .jlog-t small { margin-left: 6px; font-weight: 800; color: var(--muted); }
+.jlog-l { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.jlog-i { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; font-size: .82em; font-weight: 800; background: #fff; border: 1px solid var(--line); }
+.jlog-i em { padding: 1px 7px; border-radius: 999px; font-style: normal; font-weight: 900; color: #fff; background: var(--zc); }
+.jlog-i.ok { border-color: #9fd4a6; } .jlog-i.miss { border-color: #f3c08a; } .jlog-i.peek { opacity: .7; }
+.jlog-e { margin-top: 6px; font-size: .82em; font-weight: 700; color: var(--muted); }
+.cq { position: relative; }
+.cq-result { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(244, 248, 253, .9); backdrop-filter: blur(3px); }
+.cq-result[hidden] { display: none; }
+.cqr-card { width: min(560px, 92%); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px; border-radius: 24px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); animation: cvIn .5s ease-out both; }
+.cqr-emo { font-size: 3.6em; line-height: 1; } .cqr-score { font-size: 1.6em; font-weight: 900; color: var(--muted); } .cqr-score b { font-size: 2em; color: var(--ink); }
+.cqr-t { font-size: 1.2em; font-weight: 900; }
+.cqr-bars { width: 100%; display: grid; gap: 6px; margin: 6px 0; }
+.cqr-b { display: grid; grid-template-columns: 5.5em 1fr 3em; align-items: center; gap: 8px; font-weight: 800; font-size: .9em; }
+.cqr-b i { height: 14px; border-radius: 7px; background: var(--panel-2); overflow: hidden; } .cqr-b s { display: block; height: 100%; background: var(--zc); }
+.cqr-b em { font-style: normal; text-align: right; color: var(--muted); }
+.cqr-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .cqr-go > span { font-size: .85em; font-weight: 900; color: var(--muted); }
+.cm-lead { flex: none; font-weight: 800; color: var(--ink-2); }
+.cm-fig { flex: 1; }
+.cm-e { fill: none; stroke: #b9c7d8; stroke-width: 2.5; }
+.cm-n { cursor: pointer; outline: none; }
+.cm-n rect { fill: #fff; stroke: var(--nc); stroke-width: 3; transition: fill .2s; }
+.cm-n:hover rect, .cm-n:focus-visible rect { fill: color-mix(in srgb, var(--nc) 14%, #fff); }
+.cm-t { font-size: 17px; font-weight: 900; fill: #1b2233; } .cm-s { font-size: 12px; font-weight: 700; fill: #6b7385; }
+.cm-col { font-size: 13px; font-weight: 900; fill: #8a93a6; }
+@media (max-width: 1100px) { .cmp-body { grid-template-columns: 1fr; } .mt-graphs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .cmp-graphs { grid-template-columns: 1fr; } .mt-graphs { grid-template-columns: 1fr 1fr; } .mt-q { font-size: 1.05em; }
+  .cm-fig { flex: none; aspect-ratio: 920 / 380; min-height: 0; }
+}
+.judge-split .split-side { min-height: 0; overflow: auto; }
+.cm-fig { aspect-ratio: 980 / 410; flex: none; width: 100%; max-height: calc(100vh - 300px); }
+/* 두 도시 비교: 위 = 큰 그래프 두 개 · 아래 = 차이 막대 | 단서 */
+.cmp-body { grid-template-columns: 1fr; flex: none; gap: 12px; }
+.cmp-g .cg-svg { max-height: calc(100vh - 560px); min-height: 240px; }
+.cmp-right { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; overflow: visible; }
+.dv { grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+.cmp-why { margin-top: 4px; }
+@media (max-width: 1100px) { .cmp-right, .dv { grid-template-columns: 1fr; } }

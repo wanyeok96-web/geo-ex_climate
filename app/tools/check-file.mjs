@@ -246,8 +246,8 @@ try {
   console.log("\n④-3 PART 5 세계의 기후대");
   for (const [ch, z] of [["5-1", "A"], ["5-2", "B"], ["5-3", "C"], ["5-4", "D"], ["5-5", "E"], ["5-6", "H"]]) {
     await evalApp("goPage('" + ch + "'), true");
-    const ok = await waitFor("document.querySelectorAll('#page .blk').length >= 9 && document.querySelectorAll('#page .wm').length === " + (['5-1', '5-2', '5-3'].indexOf(ch) >= 0 ? 2 : 1) + " && !!document.querySelector('#page .life-img img') && document.querySelectorAll('#page .qz').length === 3", 4000);
-    check(ch + ": 블록 틀(원인·분포 지도·그래프·세부 유형·식생·생활·함께 풀기 3·정리" + ({ "5-1": " · 기압대 지도", "5-2": " · 사막의 원인 지도", "5-3": " · 기압대 지도" }[ch] || "") + ")", ok);
+    const ok = await waitFor("document.querySelectorAll('#page .blk').length >= 9 && document.querySelectorAll('#page .wm').length === " + ({ '5-1': 2, '5-2': 2, '5-3': 3 }[ch] || 1) + " && !!document.querySelector('#page .life-img img') && document.querySelectorAll('#page .qz').length === 3", 4000);
+    check(ch + ": 블록 틀(원인·분포 지도·그래프·세부 유형·식생·생활·함께 풀기 3·정리" + ({ "5-1": " · 기압대 지도", "5-2": " · 사막의 원인 지도", "5-3": " · 기압대 지도 · 바람 지도" }[ch] || "") + ")", ok);
   }
   await evalApp("goPage('5-1'), true");
   await waitFor("!!document.querySelector('.pb-move')", 3000);
@@ -307,19 +307,48 @@ try {
     return scenes + '|' + out.join();
   })()`);
   check("PART 5 경관 탐험 6개(번호 7곳 · 설명 카드) · 시뮬레이터 2차(화전 · 유목 · 농업 달력 · 봄 홍수 · 바다 얼음 · 고도)", s52 === "6|true,true,true,true,true,true,true", s52);
+  const s53 = await evalApp(`(async () => {
+    const out = [], wait = () => new Promise((r) => setTimeout(r, 400));
+    const blk = async (ch, pre) => { goPage(ch); let b = null; for (let t = 0; t < 30 && !b; t++) { await wait(); const bl = CHAPTER_CONTENT[ch].blocks, i = bl.findIndex((x) => x.title.indexOf(pre) === 0); b = document.querySelector('#page .blk[data-blk="' + (i + 1) + '"]'); if (b && !b.querySelector('input, .p4-seg')) b = null; } return b; };
+    const inp = (b, id, v) => { const s = b.querySelector('#' + id); s.value = v; s.dispatchEvent(new Event('input')); };
+    let b = await blk('5-1', '시뮬레이터 — 열대 우림'); inp(b, 'pl-y', 2020);
+    out.push(b.querySelectorAll('.pl-t.conv').length === 10 && b.querySelector('.pl-read').textContent.includes('40%')); b.querySelector('[data-seg="plk"] .p4-sb[data-i="1"]').click(); out.push(b.querySelector('.pl-read').textContent.includes('30%'));
+    b = await blk('5-2', '시뮬레이터 — 건조'); b.querySelector('[data-seg="dm"] .p4-sb[data-i="2"]').click(); b.querySelector('[data-seg="dmu"] .p4-sb[data-i="2"]').click(); inp(b, 'dm-y', 30);
+    out.push(b.querySelector('.dm-read').textContent.includes('0%') && b.querySelector('.dm-risk').classList.contains('on')); b.querySelector('[data-seg="dmf"] .p4-sb[data-i="1"]').click(); out.push(!b.querySelector('.dm-read').textContent.includes(' 0%') && b.querySelector('.dm-fix').classList.contains('on'));
+    b = await blk('5-3', '시뮬레이터 — 서안'); out.push(b.querySelector('.cw-read').textContent.includes('5.2℃') && b.querySelector('.cw-read').textContent.includes('−2.4℃'));
+    b = await blk('5-5', '시뮬레이터 — 백야 현상'); out.push(b.querySelector('.ms-read').textContent.includes('백야'));
+    b.querySelector('[data-seg="msd"] .p4-sb[data-i="2"]').click(); out.push(b.querySelector('.ms-read').textContent.includes('극야'));
+    b.querySelector('[data-seg="msl"] .p4-sb[data-i="3"]').click(); out.push(b.querySelector('.ms-read').textContent.includes('해가 뜨고 짐'));
+    b = await blk('5-6', '시뮬레이터 — 적도'); inp(b, 'hd-h', 4); const night = b.querySelector('.hd-read').textContent;
+    out.push(/키토[^이]*두꺼운 겉옷/.test(night) && /이키토스[^두]*반소매/.test(night));
+    return out.join();
+  })()`);
+  check("PART 5 시뮬레이터 3차: 플랜테이션(2020년 숲 40% · 보호 구역 30%) · 센터 피벗 고갈 → 해결 방법 적용 · 런던 5.2℃ vs 서울 −2.4℃ · 트롬쇠 백야 · 12월 극야 · 서울은 뜨고 짐 · 새벽 키토 겉옷", s53 === "true,true,true,true,true,true,true,true,true", s53);
   check("5-x 삽화 6장 불러옴", await evalApp("Promise.all(['tropical','dry','temperate','subarctic','polar','highland'].map((n) => new Promise((r) => { const i = new Image(); i.onload = () => r(i.naturalWidth > 0); i.onerror = () => r(false); i.src = 'assets/lifestyle/' + n + '.png'; }))).then((a) => a.every(Boolean))"));
 
   console.log("\n④-4 PART 6 정리와 평가");
   await evalApp("goPage('6-1'), true");
-  check("6-1: 블록 6장 · 도시 점 " + 103 + "개", await waitFor("document.querySelectorAll('#page .blk').length === 6 && document.querySelectorAll('.blk[data-blk=\"1\"] .wm-city').length === 103", 4000));
+  check("6-1: 블록 7장 · 도시 점 " + 103 + "개", await waitFor("document.querySelectorAll('#page .blk').length === 7 && document.querySelectorAll('.blk[data-blk=\"1\"] .wm-city').length === 103", 4000));
   await evalApp("document.querySelector('.blk[data-blk=\"1\"] .wm-city[data-city=\"Tokyo\"] circle').dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })), true");
   check("도시 점(도쿄) 누르기 → 오른쪽 그래프·정보", await waitFor("document.querySelector('.city-side .cinfo-name').textContent === '도쿄'", 2000));
   await evalApp("document.querySelector('.cmp-set[data-i=\"2\"]').click(), true");
-  check("추천 비교(키토 vs 이키토스) → 표에 H · Af", await waitFor("[...document.querySelectorAll('.cmp-table tbody tr:first-child td')].map((t) => t.textContent).join() === 'H,Af'", 2000));
+  check("추천 비교(키토 vs 이키토스) → 기호 H · Af · 차이 막대 4줄 · 단서(해발 고도)", await waitFor("[...document.querySelectorAll('.cmp-h em')].map((t) => t.textContent).join() === 'H,Af' && document.querySelectorAll('.dv-r').length === 4 && document.querySelector('.cmp-auto').textContent.includes('해발 고도')", 2000));
+  const mt = await evalApp(`(() => {
+    const b = document.querySelector('.mt').closest('.blk');
+    b.querySelector('.mt-g[data-i="0"]').click();
+    const wrong = [...b.querySelectorAll('.mt-nm')].find((n) => n.dataset.i !== '0'); wrong.click();
+    const miss = b.querySelector('.mt-score').textContent;
+    b.querySelector('.mt-nm[data-i="0"]').click();   // 오답 뒤에도 그래프 선택은 유지
+    for (const i of [1, 2, 3]) { b.querySelector('.mt-g[data-i="' + i + '"]').click(); b.querySelector('.mt-nm[data-i="' + i + '"]').click(); }
+    return miss + '|' + b.querySelectorAll('.mt-g.ok').length + '|' + b.querySelector('.mt-fb').textContent;
+  })()`);
+  check("그래프 짝 맞추기: 틀리면 횟수 1 · 네 쌍 완성", /틀린 횟수 1/.test(mt) && /\|4\|완성/.test(mt), mt);
   await evalApp("goPage('6-2'), true");
   await waitFor("document.querySelectorAll('#page .blk').length === 4", 3000);
   await evalApp("document.querySelector('.pick-rand').click(), true");
   check("6-2: 무작위 도시 → 판별판 다시 그림", await waitFor("!!document.querySelector('.judge-host .jb') && document.querySelectorAll('.blk[data-blk=\"1\"] .wm-city.sel').length === 1", 2000));
+  const jl = await evalApp(`(() => { document.querySelector('.judge-host .jb-reveal').click(); return document.querySelector('.jlog-t').textContent + '|' + document.querySelectorAll('.jlog-i').length; })()`);
+  check("6-2: 판별을 마치면 판별 기록에 쌓임", /1곳/.test(jl) && /\|1$/.test(jl), jl);
   check("6-2: 다른 무작위 도시 버튼", await evalApp(`(() => { const a = document.querySelector('.judge-host .jb-city').textContent; document.querySelector('.jh-next').click(); return document.querySelector('.judge-host .jb-city').textContent !== a; })()`));
   await evalApp("goPage('6-3'), true");
   check("6-3: 교실 퀴즈 — 기후대 선택지 5개", await waitFor("document.querySelectorAll('.cq-opt').length === 5", 3000));
@@ -342,6 +371,17 @@ try {
   await evalApp("document.querySelector('.cq-team[data-team=\"0\"]').click(), true");
   await evalApp("document.querySelector('.cq-hint').click(), true");
   check("교실 퀴즈 힌트 → 그래프에 최난월·연강수량 표시", await evalApp("document.querySelector('.cq-graph .cg').classList.contains('cg-on-tmax') && document.querySelector('.cq-graph .cg').classList.contains('cg-on-pann')"));
+  const rd10 = await evalApp(`(() => {
+    document.querySelector('.cq-mode[data-mode="zone"]').click();
+    document.querySelector('.cq-round[data-r="10"]').click();
+    for (let k = 0; k < 10; k++) { document.querySelector('.cq-reveal').click(); document.querySelector('.cq-next').click(); }
+    const r = document.querySelector('.cq-result');
+    const out = !r.hidden + '|' + r.querySelector('.cqr-score').textContent;
+    r.querySelector('.cq-again').click();
+    return out + '|' + document.querySelector('.cq-result').hidden;
+  })()`);
+  check("교실 퀴즈 10문제 도전: 끝나면 결과 카드(0 / 10) · 다시 도전", rd10 === "true|0 / 10|true", rd10);
+  check("6-3: 단원 마무리 개념 지도 — 상자 13개(누르면 챕터 이동)", await evalApp("document.querySelectorAll('.cm-n[data-go]').length === 13"));
   check("정답 보기 → 정답 표시 · 기후 기호 모드 선택지 4개", /"answered":true/.test(cq) && /"codeOpts":4/.test(cq), cq);
 
   console.log("\n⑤ 해상도별 화면 캡처 → tools/shots/");

@@ -56,21 +56,90 @@
     { a: "Sydney", b: "Tokyo", t: "남반구 vs 북반구", why: "두 도시 모두 온난 습윤 기후(Cfa) — 남반구 시드니는 1월이 최난월, 북반구 도쿄는 8월이 최난월", go: "4-1" }
   ];
 
+  /* 두 도시의 차이를 읽어 까닭 후보 제시 (개조식) */
+  function autoWhy(ca, cb) {
+    const out = [], ra = maxOf(ca.t) - minOf(ca.t), rb = maxOf(cb.t) - minOf(cb.t), pa = sum(ca.p), pb = sum(cb.p);
+    const ma = sum(ca.t) / 12, mb = sum(cb.t) / 12, dLat = Math.abs(Math.abs(ca.lat) - Math.abs(cb.lat));
+    const hot = function (c) { return c.lat >= 0 ? c.t.indexOf(maxOf(c.t)) : c.t.indexOf(maxOf(c.t)); };
+    if ((ca.lat >= 0) !== (cb.lat >= 0)) out.push(["🌏", "반구가 다름", "최난월이 " + (hot(ca) + 1) + "월 · " + (hot(cb) + 1) + "월 — 계절이 반대"]);
+    if (dLat >= 15) out.push(["☀️", "위도 차이 " + Math.round(dLat) + "°", "저위도일수록 태양 에너지 많음 → 연평균 기온 " + deg(Math.abs(ma - mb)) + " 차이"]);
+    else if (Math.abs(ma - mb) >= 8) out.push(["⛰️", "위도는 비슷한데 기온 차 " + deg(Math.abs(ma - mb)), "해발 고도 차이를 의심 (고산 기후)"]);
+    if (Math.abs(ra - rb) >= 10) out.push(["🏔️", "연교차 차이 " + deg(Math.abs(ra - rb)), (ra > rb ? ca.kr : cb.kr) + " — 대륙성(대륙 내부 · 동안) / " + (ra > rb ? cb.kr : ca.kr) + " — 해양성"]);
+    if (Math.max(pa, pb) >= Math.min(pa, pb) * 2.5 && Math.abs(pa - pb) >= 400) out.push(["💧", "연강수량 " + Math.round(Math.max(pa, pb) / Math.max(1, Math.min(pa, pb))) + "배 차이", (pa < pb ? ca.kr : cb.kr) + " — 고압대 · 한류 · 대륙 내부 · 비 그늘 등 건조 요인"]);
+    const sumer = function (c) { const s6 = c.lat >= 0 ? [5, 6, 7] : [11, 0, 1]; return s6.reduce(function (x, i) { return x + c.p[i]; }, 0) / Math.max(1, sum(c.p)); };
+    const sa = sumer(ca), sb = sumer(cb);
+    if (Math.abs(sa - sb) >= .25) out.push(["🌦️", "비가 오는 계절이 다름", (sa > sb ? ca.kr : cb.kr) + " — 여름에 집중(계절풍 · 적도 저압대) / " + (sa > sb ? cb.kr : ca.kr) + " — " + (Math.min(sa, sb) < .12 ? "여름 건조(아열대 고압대)" : "고르게 내림")]);
+    if (!out.length) out.push(["🔎", "두 도시가 비슷함", "같은 기후대 — 작은 차이는 해류 · 지형 등에서 찾기"]);
+    return out.slice(0, 3);
+  }
+  function diffBars(ca, cb) {
+    const rows = [["최난월", maxOf(ca.t), maxOf(cb.t), "℃"], ["최한월", minOf(ca.t), minOf(cb.t), "℃"], ["연교차", maxOf(ca.t) - minOf(ca.t), maxOf(cb.t) - minOf(cb.t), "℃"], ["연강수량", sum(ca.p), sum(cb.p), "mm"]];
+    return '<div class="dv">' + rows.map(function (r) {
+      const lo = Math.min(0, r[1], r[2]), hi = Math.max(r[1], r[2], r[3] === "mm" ? 100 : 10), w = function (v) { return ((v - lo) / (hi - lo) * 100).toFixed(1); };
+      const fmt = function (v) { return r[3] === "mm" ? Math.round(v).toLocaleString() + "mm" : deg(v); };
+      return '<div class="dv-r"><span class="dv-k">' + r[0] + '</span><div class="dv-bars">' +
+        '<div class="dv-b a"><i style="width:' + w(r[1]) + '%"></i><b>' + fmt(r[1]) + '</b></div>' +
+        '<div class="dv-b b"><i style="width:' + w(r[2]) + '%"></i><b>' + fmt(r[2]) + '</b></div></div></div>';
+    }).join("") + '</div>';
+  }
   function compareHtml(a, b) {
     const ca = C(a), cb = C(b), sc = ClimGraph.scaleFor([ca, cb]);
     const row = function (k, fa, fb) { return '<tr><th>' + k + '</th><td>' + fa(ca) + '</td><td>' + fb(cb) + '</td></tr>'; };
     const code = function (c) { return c.type; };
+    const head = function (c, k) { return '<div class="cmp-h ' + k + '"><i></i><b>' + escHtml(c.kr) + '</b><span>' + latTxt(c) + '</span><em style="--zc:' + ZONES[zoneOfType(c.type)].color + '">' + code(c) + '</em></div>'; };
     return '<div class="cmp-graphs">' +
-        ClimGraph.svg(ca, { title: escHtml(ca.kr) + " (" + latTxt(ca) + ")", lo: sc.lo, hi: sc.hi, pTop: sc.pTop }) +
-        ClimGraph.svg(cb, { title: escHtml(cb.kr) + " (" + latTxt(cb) + ")", lo: sc.lo, hi: sc.hi, pTop: sc.pTop }) +
+        '<div class="cmp-g">' + head(ca, "a") + ClimGraph.svg(ca, { title: escHtml(ca.kr) + " (" + latTxt(ca) + ")", lo: sc.lo, hi: sc.hi, pTop: sc.pTop }) + '</div>' +
+        '<div class="cmp-g">' + head(cb, "b") + ClimGraph.svg(cb, { title: escHtml(cb.kr) + " (" + latTxt(cb) + ")", lo: sc.lo, hi: sc.hi, pTop: sc.pTop }) + '</div>' +
       '</div>' +
-      '<table class="cmp-table"><thead><tr><th></th><th>' + escHtml(ca.kr) + '</th><th>' + escHtml(cb.kr) + '</th></tr></thead><tbody>' +
-        row("기후 기호", code, code) +
-        row("최난월", function (c) { return deg(maxOf(c.t)); }, function (c) { return deg(maxOf(c.t)); }) +
-        row("최한월", function (c) { return deg(minOf(c.t)); }, function (c) { return deg(minOf(c.t)); }) +
-        row("연교차", function (c) { return deg(maxOf(c.t) - minOf(c.t)); }, function (c) { return deg(maxOf(c.t) - minOf(c.t)); }) +
-        row("연강수량", function (c) { return mm(sum(c.p)); }, function (c) { return mm(sum(c.p)); }) +
-      '</tbody></table>';
+      '<div class="cmp-right">' + diffBars(ca, cb) +
+        '<div class="cmp-auto"><div class="cmp-at">차이에서 찾은 단서</div>' + autoWhy(ca, cb).map(function (w) { return '<div class="cmp-ai"><span>' + w[0] + '</span><div><b>' + fmtKo(w[1]) + '</b><small>' + fmtKo(w[2]) + '</small></div></div>'; }).join("") + '</div></div>';
+  }
+
+  /* 그래프 짝 맞추기 — 기후대가 다른 네 도시, 그래프를 고른 뒤 도시 이름 누르기 */
+  function matchBlock() {
+    function pick() {
+      const zs = shuffle(["A", "B", "C", "D", "E"]).slice(0, 4);
+      return zs.map(function (z) { const l = POOL.filter(function (c) { return c.type.charAt(0) === z; }); return l[Math.floor(Math.random() * l.length)]; });
+    }
+    return {
+      title: "그래프 짝 맞추기", tag: "함께 풀기",
+      html: '<div class="mt"><div class="mt-top"><span class="mt-q"><span class="qz-tag q">Q</span>그래프 고르기 → 도시 이름 누르기 — 네 쌍을 모두 맞히기</span><span class="mt-score"></span></div>' +
+        '<div class="mt-graphs"></div><div class="mt-names"></div>' +
+        '<div class="mt-foot"><div class="mt-fb" aria-live="polite"></div><button type="button" class="qz-btn ghost mt-show">정답 보기</button><button type="button" class="qz-btn mt-new">새 문제 ▶</button></div></div>',
+      init: function (el) {
+        let set = [], sel = -1, done = {}, miss = 0;
+        function draw() {
+          const names = shuffle(set.map(function (c, i) { return i; }));
+          el.querySelector(".mt-graphs").innerHTML = set.map(function (c, i) {
+            return '<button type="button" class="mt-g' + (done[i] !== undefined ? " ok" : "") + (sel === i ? " sel" : "") + '" data-i="' + i + '"><span class="mt-n">' + "ⓐⓑⓒⓓ"[i] + '</span>' + ClimateChart.svg(c, {}) +
+              '<span class="mt-tag">' + (done[i] !== undefined ? escHtml(c.kr) + ' · ' + c.type : "?") + '</span></button>';
+          }).join("");
+          el.querySelector(".mt-names").innerHTML = names.map(function (i) {
+            const c = set[i];
+            return '<button type="button" class="mt-nm' + (done[i] !== undefined ? " used" : "") + '" data-i="' + i + '">' + escHtml(c.kr) + ' <small>' + latTxt(c) + '</small></button>';
+          }).join("");
+          const n = Object.keys(done).length;
+          el.querySelector(".mt-score").innerHTML = "맞힌 짝 <b>" + n + "</b> / 4 · 틀린 횟수 " + miss;
+          if (n === 4) { const fb = el.querySelector(".mt-fb"); fb.className = "mt-fb ok"; fb.textContent = miss ? "완성 — " + miss + "번 틀린 뒤 모두 맞힘" : "완벽 — 한 번에 모두 맞힘"; }
+        }
+        function fresh() { set = pick(); sel = -1; done = {}; miss = 0; el.querySelector(".mt-fb").textContent = ""; el.querySelector(".mt-fb").className = "mt-fb"; draw(); }
+        el.addEventListener("click", function (e) {
+          const g = e.target.closest(".mt-g");
+          if (g) { const i = +g.dataset.i; if (done[i] === undefined) { sel = sel === i ? -1 : i; draw(); } return; }
+          const nm = e.target.closest(".mt-nm");
+          if (nm && !nm.classList.contains("used")) {
+            const fb = el.querySelector(".mt-fb");
+            if (sel < 0) { fb.className = "mt-fb"; fb.textContent = "그래프를 먼저 고르기"; return; }
+            if (+nm.dataset.i === sel) { done[sel] = true; fb.className = "mt-fb ok"; fb.textContent = "정답 — " + set[sel].kr + " (" + set[sel].type + ")"; sel = -1; }
+            else { miss++; fb.className = "mt-fb no"; fb.textContent = "오답 — 기온 선(최난월 · 최한월)과 강수 막대를 다시 보기"; }
+            draw(); return;
+          }
+          if (e.target.closest(".mt-show")) { set.forEach(function (c, i) { done[i] = true; }); sel = -1; draw(); return; }
+          if (e.target.closest(".mt-new")) fresh();
+        });
+        fresh();
+      }
+    };
   }
 
   CHAPTER_CONTENT["6-1"] = { blocks: [
@@ -105,7 +174,7 @@
           }).join("") + '</div>' +
         '</div>' +
         '<div class="cmp-body">' + compareHtml("London", "Moscow") + '</div>' +
-        '<div class="cmp-why"><button type="button" class="qz-btn ghost cmp-why-btn">까닭 보기</button><div class="cmp-why-t" hidden></div></div>',
+        '<div class="cmp-why"><button type="button" class="qz-btn ghost cmp-why-btn">교과서 설명 보기</button><div class="cmp-why-t" hidden></div></div>',
       init: function (el) {
         const selA = el.querySelector('select[data-k="a"]'), selB = el.querySelector('select[data-k="b"]');
         const body = el.querySelector(".cmp-body"), whyT = el.querySelector(".cmp-why-t"), whyWrap = el.querySelector(".cmp-why");
@@ -128,6 +197,7 @@
         render();
       }
     },
+    matchBlock(),
     {
       title: "대륙 내부의 도시", kind: "quiz",
       quiz: {
@@ -146,11 +216,11 @@
     },
     {
       title: "정리", kind: "summary", terms: ["같은 눈금 비교","대륙성 · 해양성","대륙 서안 · 동안","남반구 그래프"],
-      html: pts([
-        "두 도시 비교: 같은 눈금에서 <b>연교차 · 연강수량 · 강수 계절</b> 비교",
-        "차이의 까닭 → 기후 요인(수륙 분포 · 해류 · 지형 · 계절풍)과 대기 대순환",
-        "남반구 도시: 계절 반대 — 그래프 모양으로 최난월·최한월 찾기"
-      ], "lg")
+      html: sumCards([
+        { emo: "📊", t: "같은 눈금으로 비교", d: "연교차 · 연강수량 · 비가 오는 계절", c: "#e8730c" },
+        { emo: "🧭", t: "차이의 까닭", d: "기후 요인(수륙 분포 · 해류 · 지형 · 계절풍) · 대기 대순환", c: "#0f9d8a" },
+        { emo: "🌏", t: "남반구 도시", d: "계절 반대 — 그래프 모양으로 최난월 · 최한월 찾기", c: "#2b6fe3" }
+      ], "g3")
     }
   ] };
 
@@ -163,12 +233,22 @@
     do { c = POOL[Math.floor(Math.random() * POOL.length)]; } while (POOL.length > 1 && c.id === judgeCity);
     return c;
   }
+  /* 판별 기록 — 스스로 판별(✓) · 정답 보기 사용(👀) · 틀린 횟수 */
+  const LOG = [];
+  function logHtml() {
+    const self = LOG.filter(function (x) { return !x.peek; }).length;
+    return '<div class="jlog"><div class="jlog-t">판별 기록 <small>' + LOG.length + '곳 · 스스로 판별 ' + self + '곳</small></div>' +
+      (LOG.length ? '<div class="jlog-l">' + LOG.slice(-8).reverse().map(function (x) {
+        const c = C(x.id);
+        return '<span class="jlog-i' + (x.peek ? " peek" : x.miss ? " miss" : " ok") + '" style="--zc:' + ZONES[zoneOfType(c.type)].color + '"><em>' + Koppen.judge(c).code + '</em>' + escHtml(c.kr) + (x.peek ? " 👀" : x.miss ? " · " + x.miss + "번 틀림" : " ✓") + '</span>';
+      }).join("") + '</div>' : '<div class="jlog-e">판별을 마치면 여기에 쌓임</div>') + '</div>';
+  }
   function judgeHtml(id) {
     const c = C(id);
     return '<div class="split judge-split"><div class="split-main graph-main">' +
         ClimGraph.svg(c, { title: escHtml(c.kr) + " (" + latTxt(c) + ")", on: ["g18", "g10", "gm3"] }) +
         '<div class="cg-btns">' + [["tmax", "최난월", "t"], ["tmin", "최한월", "t"], ["pann", "연강수량", "p"], ["pmin", "최소우월", "p"], ["g22", "22℃ 선", "t"]].map(function (k) {
-          return '<button type="button" class="cg-btn ' + k[2] + '" data-key="' + k[0] + '">' + k[1] + '</button>'; }).join("") + '</div></div>' +
+          return '<button type="button" class="cg-btn ' + k[2] + '" data-key="' + k[0] + '">' + k[1] + '</button>'; }).join("") + '</div>' + logHtml() + '</div>' +
       '<div class="split-side">' + JudgeBoard.html(c, {}) + '<button type="button" class="qz-btn ghost jh-next">다른 무작위 도시 ▶</button></div></div>';
   }
   CHAPTER_CONTENT["6-2"] = { blocks: [
@@ -197,15 +277,27 @@
     },
     {
       title: "정리", kind: "summary", terms: ["1차 기후대","2차 강수의 계절","3차 여름 기온"],
-      html: pts([
-        "1차: 최난월 10℃ 미만 <b>E</b> → 연강수량 500mm 미만 <b>B</b> → 최한월 18℃ 이상 <b>A</b> → −3℃ 초과 <b>C</b> / 이하 <b>D</b>",
-        "2차: 강수의 계절(f · w · s · m) · 건조(W · S) · 한대(T · F)",
-        "3차: Cf만 — 최난월 22℃ 이상 a / 미만 b"
-      ], "lg") + '<div class="q-go">' + goBtn("4-2", "쾨펜의 구분 기준 다시 보기") + '</div>'
+      html: sumCards([
+        { emo: "1️⃣", t: "1차 — 기후대", d: ["최난월 10℃ 미만 → E", "연강수량 500mm 미만 → B", "최한월 18℃ 이상 → A", "−3℃ 초과 C / 이하 D"], c: "#e03131" },
+        { emo: "2️⃣", t: "2차 — 강수 · 건조 · 한대", d: ["강수의 계절 f · w · s · m", "건조 W · S", "한대 T · F"], c: "#2b6fe3" },
+        { emo: "3️⃣", t: "3차 — 여름 기온", d: ["Cf만 구분", "최난월 22℃ 이상 a", "22℃ 미만 b"], c: "#6cb52d" }
+      ], "g3") + '<div class="q-go">' + goBtn("4-2", "쾨펜의 구분 기준 다시 보기") + '</div>'
     }
   ] };
   function bindJudge(el) {
     JudgeBoard.init(el.querySelector(".judge-host"));
+    const jb = el.querySelector(".jb"), rec = { id: judgeCity, miss: 0, peek: false };
+    let logged = false;
+    jb.addEventListener("click", function (e) {
+      const b = e.target.closest(".jb-b");
+      if (b && b.classList.contains("no")) rec.miss++;
+      if (e.target.closest(".jb-reveal")) rec.peek = true;
+      if (e.target.closest(".jb-reset")) { logged = false; rec.miss = 0; rec.peek = false; }
+      if (!logged && jb.classList.contains("done")) {
+        logged = true; LOG.push({ id: rec.id, miss: rec.miss, peek: rec.peek });
+        const l = el.querySelector(".jlog"); if (l) l.outerHTML = logHtml();
+      }
+    });
     el.querySelector(".jh-next").addEventListener("click", function () {
       const c = randomCity();
       if (pickMap) pickMap.select(c.id);
@@ -238,6 +330,7 @@
           '<div class="cq-bar">' +
             '<div class="cq-grp"><span>맞힐 것</span><button type="button" class="cq-mode on" data-mode="zone">기후대 (A~E)</button><button type="button" class="cq-mode" data-mode="code">기후 기호</button></div>' +
             '<div class="cq-grp"><span>대결</span><button type="button" class="cq-team on" data-team="0">없음</button><button type="button" class="cq-team" data-team="2">두 팀</button></div>' +
+            '<div class="cq-grp"><span>문제 수</span><button type="button" class="cq-round on" data-r="0">계속</button><button type="button" class="cq-round" data-r="10">10문제 도전</button></div>' +
             '<div class="cq-grp"><span>제한 시간</span><button type="button" class="cq-time on" data-t="0">없음</button><button type="button" class="cq-time" data-t="15">15초</button><button type="button" class="cq-time" data-t="30">30초</button></div>' +
             '<div class="cq-count"></div>' +
           '</div>' +
@@ -250,21 +343,50 @@
               '<div class="cq-ctrl"><button type="button" class="qz-btn ghost cq-hint">힌트</button><button type="button" class="qz-btn cq-reveal">정답 보기</button><button type="button" class="qz-btn ghost cq-next">다음 문제 ▶</button></div>' +
             '</div>' +
           '</div>' +
+          '<div class="cq-result" hidden></div>' +
         '</div>',
       init: function (el) { quizInit(el); }
     },
+    mapBlock(),
     {
       title: "정리", kind: "summary", terms: ["그래프 읽기","판별 순서","형성 원인 · 분포 · 주민 생활"],
-      html: pts([
-        "그래프 읽기 → 판별 순서(E → B → A → C/D) → 강수의 계절 → 여름 기온",
-        "헷갈리면 기준선(18 · 10 · −3 · 22℃)과 연강수량(500 · 250mm)부터 확인",
-        "기후대마다 형성 원인 · 분포 · 주민 생활까지 함께 떠올리기"
-      ], "lg") + '<div class="q-go">' + goBtn("4-2", "판별 기준") + goBtn("5-1", "세계의 기후대") + '</div>'
+      html: sumCards([
+        { emo: "👀", t: "그래프 읽기", d: "판별 순서 E → B → A → C/D → 강수의 계절 → 여름 기온", c: "#7a5cc8" },
+        { emo: "📏", t: "헷갈리면 기준선부터", d: "18 · 10 · −3 · 22℃ 선 · 연강수량 500 · 250mm", c: "#e8730c" },
+        { emo: "🗺️", t: "기후대와 생활 연결", d: "형성 원인 · 분포 · 주민 생활까지 함께 떠올리기", c: "#0f9d8a" }
+      ], "g3") + '<div class="q-go">' + goBtn("4-2", "판별 기준") + goBtn("5-1", "세계의 기후대") + '</div>'
     }
   ] };
 
+  /* 단원 마무리 — 기후 단원 개념 지도 (누르면 그 챕터로) */
+  function mapBlock() {
+    const N = [
+      { id: "1-1", x: 90, y: 70, t: "날씨와 기후", c: "#2b6fe3" }, { id: "1-2", x: 90, y: 190, t: "세계의 기후 지도", c: "#2b6fe3" },
+      { id: "2-1", x: 330, y: 70, t: "기후 요소", s: "기온 · 강수 · 바람", c: "#0f9d8a" }, { id: "2-2", x: 330, y: 190, t: "기후 요인", s: "위도 · 수륙 · 해류 · 지형 · 계절풍", c: "#0f9d8a" },
+      { id: "3-4", x: 330, y: 310, t: "대기 대순환", s: "기압대 · 바람", c: "#ea5a3d" },
+      { id: "4-1", x: 570, y: 70, t: "기후 그래프", s: "기온 선 · 강수 막대", c: "#7a5cc8" }, { id: "4-2", x: 570, y: 190, t: "쾨펜의 기후 구분", s: "E → B → A → C/D", c: "#7a5cc8" },
+      { id: "5-1", x: 810, y: 40, t: "A 열대", c: "#e03131" }, { id: "5-2", x: 810, y: 100, t: "B 건조", c: "#e6a700" }, { id: "5-3", x: 810, y: 160, t: "C 온대", c: "#6cb52d" },
+      { id: "5-4", x: 810, y: 220, t: "D 냉대", c: "#2f6fdb" }, { id: "5-5", x: 810, y: 280, t: "E 한대", c: "#8e5cc8" }, { id: "5-6", x: 810, y: 340, t: "H 고산", c: "#8a8f98" }
+    ];
+    const E = [["1-1", "1-2"], ["2-1", "2-2"], ["2-2", "3-4"], ["1-2", "2-2"], ["2-1", "4-1"], ["4-1", "4-2"], ["3-4", "4-2"], ["4-2", "5-1"], ["4-2", "5-2"], ["4-2", "5-3"], ["4-2", "5-4"], ["4-2", "5-5"], ["4-2", "5-6"]];
+    const P = {}; N.forEach(function (n) { P[n.id] = n; });
+    const zone = function (n) { return /^5-/.test(n.id); };
+    let svg = '<svg class="p2-svg cm-svg" viewBox="-30 0 980 410" role="img" aria-label="기후 단원 개념 지도">' +
+      ['1 기후의 이해', '2 기후 요소와 요인 · 3 대기 대순환', '4 기후 구분', '5 세계의 기후대'].map(function (t, i) { return '<text class="cm-col" x="' + [90, 330, 570, 810][i] + '" y="400" text-anchor="middle">PART ' + t + '</text>'; }).join("") +
+      E.map(function (e) { const a = P[e[0]], b = P[e[1]], ax = a.x + (b.x > a.x ? (zone(a) ? 50 : 100) : 0), bx = b.x - (b.x > a.x ? (zone(b) ? 50 : 100) : 0);
+        return '<path class="cm-e" d="M' + ax + ' ' + (a.y + (b.x === a.x ? 30 : 0)) + ' C' + ((ax + bx) / 2) + ' ' + a.y + ' ' + ((ax + bx) / 2) + ' ' + b.y + ' ' + bx + ' ' + (b.y - (b.x === a.x ? 30 : 0)) + '"/>'; }).join("") +
+      N.map(function (n) { const w = zone(n) ? 100 : 200, h = zone(n) ? 44 : (n.s ? 62 : 48);
+        return '<g class="cm-n" data-go="' + n.id + '" tabindex="0" role="link"><rect x="' + (n.x - w / 2) + '" y="' + (n.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="12" style="--nc:' + n.c + '"/>' +
+          '<text x="' + n.x + '" y="' + (n.y + (n.s ? -4 : 6)) + '" text-anchor="middle" class="cm-t">' + n.t + '</text>' + (n.s ? '<text x="' + n.x + '" y="' + (n.y + 18) + '" text-anchor="middle" class="cm-s">' + n.s + '</text>' : "") + '</g>'; }).join("") + '</svg>';
+    return {
+      title: "단원 마무리 — 기후 단원 한눈에",
+      html: '<p class="cm-lead">상자를 누르면 그 챕터로 이동 — 화살표를 따라 배운 내용을 이어서 설명해 보기</p><div class="p2-figwrap cm-fig">' + svg + '</div>' +
+        '<p class="p2-cap">기후 요소 · 요인과 대기 대순환 → 기후 그래프와 쾨펜의 구분 → 다섯 기후대와 고산 기후</p>'
+    };
+  }
+
   function quizInit(el) {
-    const st = { mode: "zone", time: 0, order: shuffle(POOL), i: -1, n: 0, right: 0, streak: 0, best: 0, tried: false, teams: 0, turn: 0, score: [0, 0], answered: false, timer: null, left: 0 };
+    const st = { round: 0, log: [], mode: "zone", time: 0, order: shuffle(POOL), i: -1, n: 0, right: 0, streak: 0, best: 0, tried: false, teams: 0, turn: 0, score: [0, 0], answered: false, timer: null, left: 0 };
     const q = function (s) { return el.querySelector(s); };
     function stopTimer() { if (st.timer) { clearInterval(st.timer); st.timer = null; } }
     function reveal(timeout) {
@@ -287,11 +409,29 @@
         }).join("") + '<span class="cq-turn">지금: ' + (st.turn + 1) + '팀 차례</span>';
         return;
       }
-      q(".cq-count").innerHTML = "문제 <b>" + st.n + "</b> · 정답 <b>" + st.right + "</b>" +
+      q(".cq-count").innerHTML = (st.round ? "도전 <b>" + st.n + "</b>/" + st.round : "문제 <b>" + st.n + "</b>") + " · 정답 <b>" + st.right + "</b>" +
         (st.streak >= 2 ? ' · <span class="cq-streak">🔥 ' + st.streak + '연속</span>' : "") + (st.best >= 3 ? ' · 최고 ' + st.best + '연속' : "");
+    }
+    function showResult() {
+      stopTimer();
+      const by = {};
+      st.log.forEach(function (x) { (by[x.z] = by[x.z] || [0, 0])[1]++; if (x.ok) by[x.z][0]++; });
+      const right = st.log.filter(function (x) { return x.ok; }).length;
+      const weak = Object.keys(by).filter(function (z) { return by[z][0] < by[z][1]; }).sort(function (a, b) { return by[a][0] / by[a][1] - by[b][0] / by[b][1]; });
+      const ch = { A: "5-1", B: "5-2", C: "5-3", D: "5-4", E: "5-5" };
+      const r = q(".cq-result");
+      r.hidden = false;
+      r.innerHTML = '<div class="cqr-card"><div class="cqr-emo">' + (right >= 9 ? "🏆" : right >= 6 ? "🎉" : "💪") + '</div>' +
+        '<div class="cqr-score"><b>' + right + '</b> / ' + st.log.length + '</div><div class="cqr-t">' + (right >= 9 ? "기후 판별 박사" : right >= 6 ? "잘했음 — 조금만 더" : "기준선부터 다시 확인") + '</div>' +
+        '<div class="cqr-bars">' + ["A", "B", "C", "D", "E"].filter(function (z) { return by[z]; }).map(function (z) {
+          return '<div class="cqr-b" style="--zc:' + ZONES[z].color + '"><span>' + z + ' ' + ZONES[z].name + '</span><i><s style="width:' + (by[z][0] / by[z][1] * 100) + '%"></s></i><em>' + by[z][0] + '/' + by[z][1] + '</em></div>'; }).join("") + '</div>' +
+        (weak.length ? '<div class="cqr-go"><span>다시 보기</span>' + weak.slice(0, 2).map(function (z) { return goBtn(ch[z]); }).join("") + '</div>' : "") +
+        '<button type="button" class="qz-btn cq-again">다시 도전 ▶</button></div>';
     }
     function next() {
       stopTimer();
+      if (st.round && st.log.length >= st.round) { showResult(); return; }
+      q(".cq-result").hidden = true;
       const hb = q(".cq-hint"); if (hb) hb.classList.remove("on");
       if (st.teams && st.n > 0) st.turn = 1 - st.turn;
       st.i = (st.i + 1) % st.order.length;
@@ -327,7 +467,7 @@
         bar.style.transition = "width " + st.time + "s linear"; bar.style.width = "0%";
         st.timer = setInterval(function () {
           if (!el.isConnected) { stopTimer(); return; }          // 다른 챕터로 가면 멈춤
-          st.left--; if (st.left <= 0) { st.streak = 0; count(); reveal(true); }
+          st.left--; if (st.left <= 0) { if (!st.tried) st.log.push({ z: Koppen.judge(st.order[st.i]).zone, ok: false }); st.streak = 0; count(); reveal(true); }
         }, 1000);
       } else q(".cq-timer").classList.remove("on");
     }
@@ -352,11 +492,15 @@
         const fb = q(".cq-fb");
         fb.className = "cq-fb " + (ok ? "ok" : "no");
         fb.textContent = ok ? "정답" : "오답 — 다시 생각해 보기";
+        if (!st.tried && !st.answered) st.log.push({ z: j.zone, ok: ok });
         if (ok) { st.right++; if (!st.tried) { st.streak++; st.best = Math.max(st.best, st.streak); if (st.teams) st.score[st.turn]++; } count(); reveal(false); }
         else { st.tried = true; st.streak = 0; count(); }
         return;
       }
-      if (e.target.closest(".cq-reveal")) { if (!st.answered) { st.streak = 0; count(); } reveal(false); return; }
+      if (e.target.closest(".cq-reveal")) { if (!st.answered) { if (!st.tried) st.log.push({ z: Koppen.judge(st.order[st.i]).zone, ok: false }); st.streak = 0; count(); } reveal(false); return; }
+      const rd = e.target.closest(".cq-round");
+      if (rd) { st.round = +rd.getAttribute("data-r"); el.querySelectorAll(".cq-round").forEach(function (b) { b.classList.toggle("on", b === rd); }); st.log = []; st.n = 0; st.right = 0; st.streak = 0; st.i = -1; next(); return; }
+      if (e.target.closest(".cq-again")) { st.log = []; st.n = 0; st.right = 0; st.streak = 0; st.order = shuffle(POOL); st.i = -1; next(); return; }
       const h = e.target.closest(".cq-hint");
       if (h) {
         /* 힌트: 그래프에 최난월 · 최한월 · 연강수량 표시 */

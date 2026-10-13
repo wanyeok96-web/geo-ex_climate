@@ -474,3 +474,70 @@
 .life-q { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0 0 6px; padding: 14px 16px; border-radius: 14px; background: #fff4e8; border: 2px solid #f0a35a; font-size: 1.12em; font-weight: 900; line-height: 1.45; }
 .life-q .qz-tag { align-self: center; }
 .life-q small { flex-basis: 100%; font-size: .78em; font-weight: 700; color: var(--muted); }
+
+/* ============================================================
+   PART 5 시뮬레이터 3차 (chapters/part5-sims3.js, 2026-10-02)
+   ============================================================ */
+/* 열대 우림 vs 플랜테이션 */
+.pl-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.pl-main > .p2-figwrap { min-height: 0; }
+.pl-side { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.pl-card { padding: 10px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); border-left: 6px solid; }
+.pl-card b { font-weight: 900; } .pl-card.gain { border-left-color: #e8730c; } .pl-card.loss { border-left-color: #e0483a; } .pl-card.idea { border-left-color: #2f8f3a; }
+.pl-t .pl-f, .pl-t .pl-p, .pl-t .pl-fire { transition: opacity .6s; }
+.pl-t .pl-p, .pl-t .pl-fire { opacity: 0; } .pl-t.conv .pl-f { opacity: 0; } .pl-t.conv .pl-p { opacity: 1; } .pl-t.burn .pl-fire { opacity: 1; }
+.pl-soil { fill: #4a6b34; transition: fill .6s; } .pl-t.conv .pl-soil { fill: #8a6a45; }
+.pl-fire path { animation: swFlame .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: bottom; }
+.pl-smoke circle { animation: sxSmoke 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.pl-orang { transition: transform .6s; }
+.pl-year { font-size: 26px; }
+/* 건조 지역의 농업 */
+.dm-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.dm-main > .p2-figwrap { min-height: 0; }
+.dm-h { font-size: 1.3em; font-weight: 900; } .dm-w { font-weight: 800; color: var(--ink-2); }
+.dm-risk { margin-top: auto; padding: 10px 12px; border-radius: 12px; font-weight: 800; line-height: 1.45; background: var(--panel-2); border: 1px solid var(--line); transition: background .3s; }
+.dm-risk.on { background: #fdece8; border-color: #f0a090; color: #b03a22; }
+.dm-arm { animation: dmSpin 6s linear infinite; }
+@keyframes dmSpin { to { transform: rotate(360deg); } }
+/* 서안 vs 동안 */
+.cw-map { min-height: 0; }
+.cw-a .ga-l { fill: none; stroke-linecap: round; }
+.cw-a.warm .ga-l { stroke: #e8730c; } .cw-a.warm .ga-h { fill: #e8730c; }
+.cw-a.cold .ga-l { stroke: #2b6fe3; } .cw-a.cold .ga-h { fill: #2b6fe3; }
+.cw-a.cool .ga-l { stroke: #0fb3a3; } .cw-a.cool .ga-h { fill: #0fb3a3; }
+.cw-h circle { fill: #fff; stroke: #2b6fe3; } .cw-h text { font-weight: 900; fill: #2b6fe3; }
+.cw-t { font-weight: 900; fill: #1b2233; paint-order: stroke; stroke: #fff; } .cw-t.warm { fill: #c0392b; }
+.cw-c { stroke: #fff; } .cw-c.a { fill: #e8730c; } .cw-c.b { fill: #2b6fe3; }
+.cw-ct { font-weight: 900; paint-order: stroke; stroke: #fff; } .cw-ct.a { fill: #b85a00; } .cw-ct.b { fill: #1d4fb0; }
+.cw-lg { font-size: .85em; font-weight: 900; color: var(--muted); } .cw-lg .a { color: #e8730c; } .cw-lg .b { color: #2b6fe3; }
+.cw-l { fill: none; stroke-width: 3.5; stroke-linejoin: round; } .cw-l.a { stroke: #e8730c; } .cw-l.b { stroke: #2b6fe3; }
+/* 백야 */
+.ms-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.ms-main > .p2-figwrap { min-height: 0; }
+.ms-sky { transition: fill .4s; }
+.ms-sun circle { fill: #ffd54a; stroke: #f6a821; stroke-width: 3; } .ms-sun.down circle { fill: #ffd54a; opacity: .35; }
+.ms-clock.w, .hd-t.w { fill: #fff; stroke: rgba(0, 0, 0, .3); }
+/* 적도 고산 vs 저지대 */
+.hd-fig { flex: 1.25; }
+.hd-sky { transition: fill .4s; }
+.hd-t { font-size: 24px; }
+.hd-bot { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: clamp(12px, 1.4vw, 22px); }
+.hd-bot > .p2-figwrap { min-height: 0; }
+.hd-l { fill: none; stroke-width: 4; } .hd-l.k0 { stroke: #2b6fe3; } .hd-l.k1 { stroke: #e0483a; }
+.hd-now { stroke: #1b2233; stroke-width: 2; stroke-dasharray: 5 4; }
+.hd-st { font-weight: 900; }
+.hd-cmp { display: grid; gap: 3px; } .hd-cmp b { font-weight: 900; } .hd-cmp.k0 b { color: #2b6fe3; } .hd-cmp.k1 b { color: #e0483a; }
+.hd-bar { display: grid; grid-template-columns: 3.4em 1fr 3.6em; align-items: center; gap: 6px; font-size: .82em; font-weight: 800; }
+.hd-bar i { height: 12px; border-radius: 6px; background: #f0a35a; } .hd-bar.y i { background: #8aa3c9; min-width: 3px; }
+.hd-bar em { font-style: normal; text-align: right; }
+@media (max-width: 1100px) { .pl-main, .dm-main, .ms-main, .hd-bot { grid-template-columns: 1fr; } }
+@media (max-width: 700px), (orientation: portrait) and (max-width: 1100px) {
+  .pl-main, .dm-main, .ms-main, .hd-bot { display: flex; flex-direction: column; flex: none; }
+  .ms-pw { aspect-ratio: 1 / 1; }
+}
+@media (prefers-reduced-motion: reduce) { .pl-fire path, .pl-smoke circle, .dm-arm { animation: none; } }
+.hd-lb { font-size: 15px; font-weight: 900; } .hd-lb.k0 { fill: #2b6fe3; } .hd-lb.k1 { fill: #e0483a; }
+.dm-fix { padding: 10px 12px; border-radius: 12px; font-weight: 800; line-height: 1.45; color: var(--muted); background: var(--panel-2); border: 1px dashed var(--line-2); }
+.dm-fix.on { color: #1f6b2c; background: #eaf7ec; border: 1px solid #9fd4a6; }
+.dm-arm.stop { animation: none; }
+.pl-guard { transition: opacity .5s; } .pl-gt { font-size: 15px; font-weight: 900; fill: #fff; }
